@@ -8,7 +8,7 @@ import {
   Terminal, Server, Layers, Cpu, Database, Cloud, 
   CheckCircle2, XCircle, AlertTriangle, ChevronRight, Zap,
   DollarSign, Activity, HelpCircle, MessagesSquare, FileText,
-  Search, Bell, User, LayoutTemplate
+  Search, Bell, User, LayoutTemplate, Download
 } from 'lucide-react';
 
 export default function Home() {
@@ -69,6 +69,100 @@ export default function Home() {
       }
     });
   };
+
+  const handleExport = () => {
+    if (result?.status !== 'success') return;
+    const data = result.data;
+    
+    const md: string[] = [];
+    md.push(`# Architecture Review Memo`);
+    md.push(`\n**Project Brief:**\n> ${prompt.split('\n').join('\n> ')}\n`);
+    md.push(`## Recommended Architecture: ${data.architectureStyle}`);
+    
+    if (data.recommended[0]?.reasons) {
+      md.push(`\n### Primary Reasoning`);
+      data.recommended[0].reasons.forEach((r: string) => md.push(`- ${r}`));
+    }
+    
+    if (data.businessRisks?.length) {
+      md.push(`\n### Existential Business Risks`);
+      data.businessRisks.forEach((r: any) => {
+        md.push(`**${r.risk}** (Severity: ${r.level}, Likelihood: ${r.likelihood})`);
+        md.push(`${r.reason}\n`);
+      });
+    }
+
+    if (data.domainConstraints?.length) {
+      md.push(`\n### Hard Domain Constraints`);
+      data.domainConstraints.forEach((c: string) => md.push(`- ${c}`));
+    }
+
+    if (data.coreValidationQuestions?.length) {
+      md.push(`\n### What We Would Validate First`);
+      data.coreValidationQuestions.forEach((q: string) => md.push(`- ${q}`));
+    }
+
+    if (data.criticalUnknowns?.length) {
+      md.push(`\n### Critical Unknowns`);
+      data.criticalUnknowns.forEach((q: string) => md.push(`- ${q}`));
+    }
+
+    if (data.strategicAdvantages?.length) {
+      md.push(`\n### Strategic Advantages`);
+      data.strategicAdvantages.forEach((a: string) => md.push(`- ${a}`));
+    }
+
+    if (data.deferredDecisions?.length) {
+      md.push(`\n### Intentionally Deferred`);
+      data.deferredDecisions.forEach((d: any) => {
+        md.push(`**${d.name}**`);
+        md.push(`${d.reason}\n`);
+      });
+    }
+
+    if (data.architectureDebt?.length) {
+      md.push(`\n### Accepted Debt`);
+      data.architectureDebt.forEach((d: any) => {
+        md.push(`**${d.debt}**`);
+        md.push(`${d.reason}\n`);
+      });
+    }
+
+    if (data.assumptions?.length) {
+      md.push(`\n### Core Assumptions`);
+      data.assumptions.forEach((a: string) => md.push(`- ${a}`));
+    }
+    if (data.assumptionRisk) {
+      md.push(`\n**Risk Analysis (${data.assumptionRisk.level}):** ${data.assumptionRisk.reason}`);
+    }
+
+    if (data.stack?.length) {
+      md.push(`\n### Implementation Overview`);
+      md.push(`**Core Stack:**`);
+      data.stack.forEach((s: any) => md.push(`- ${s.name} (${s.category})`));
+    }
+
+    if (data.deployment?.length) {
+      md.push(`\n**Target Deployment:**`);
+      data.deployment.forEach((d: string) => md.push(`- ${d}`));
+    }
+
+    if (data.operatingCostDrivers?.length) {
+      md.push(`\n**Estimated Operating Cost Drivers:**`);
+      data.operatingCostDrivers.forEach((c: string) => md.push(`- ${c}`));
+    }
+
+    const blob = new Blob([md.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `architecture-review.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-indigo-500/20">
@@ -303,6 +397,13 @@ export default function Home() {
                       <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                       <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Review Memo</span>
                     </div>
+                    <button 
+                      onClick={handleExport}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 rounded shadow-sm hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Export to Markdown
+                    </button>
                   </div>
                   
                   <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 mb-6 flex items-center gap-3">
