@@ -9,6 +9,12 @@ import { handleCodingAssistant } from './domains/coding_assistant';
 import { handleWeb3 } from './domains/web3';
 import { handleIoT } from './domains/iot';
 import { handlePaaS } from './domains/paas';
+import { handleSearchEngine } from './domains/search';
+import { handleRecommendation } from './domains/recommendation';
+import { handleAdTech } from './domains/adtech';
+import { handleStreaming } from './domains/streaming';
+import { handleCybersecurity } from './domains/cybersecurity';
+import { handleAIInfra } from './domains/ai_infra';
 import { handleDefault } from './domains/default';
 import { runEnhancers } from './enhancers';
 
@@ -65,6 +71,36 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
   // Route to Developer Platform / PaaS Expert Layer
   if (input.archetypes.includes('paas')) {
     const response = handlePaaS(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('search_engine')) {
+    const response = handleSearchEngine(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('recommendation_engine')) {
+    const response = handleRecommendation(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('ad_tech')) {
+    const response = handleAdTech(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('video_streaming')) {
+    const response = handleStreaming(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('cybersecurity')) {
+    const response = handleCybersecurity(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('ai_infrastructure')) {
+    const response = handleAIInfra(input);
     if (response) return response;
   }
 

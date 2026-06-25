@@ -13,6 +13,12 @@ export type ProjectArchetype =
   | 'web3_dapp'
   | 'iot_platform'
   | 'paas'
+  | 'search_engine'
+  | 'recommendation_engine'
+  | 'ad_tech'
+  | 'video_streaming'
+  | 'cybersecurity'
+  | 'ai_infrastructure'
   | 'other';
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';
