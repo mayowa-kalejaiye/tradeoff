@@ -1,0 +1,59 @@
+import { ArchitectureInput, EngineResponse } from './types';
+import { handleFintech } from './domains/fintech';
+import { handleRealtime } from './domains/realtime';
+import { handleSocial } from './domains/social';
+import { handleHealthcare } from './domains/healthcare';
+import { handleInternal } from './domains/internal';
+import { handleAIAndAutomation } from './domains/ai';
+import { handleDefault } from './domains/default';
+import { runEnhancers } from './enhancers';
+
+function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
+  // 1. Check for Absolute Vetoes (Internal Tools)
+  if (input.archetypes.includes('internal_tool')) {
+    const response = handleInternal(input);
+    if (response) return response;
+  }
+
+
+  // Route to Fintech Expert Layer
+  if (input.archetypes.includes('fintech')) {
+    const response = handleFintech(input);
+    if (response) return response;
+  }
+
+  // Route to Realtime Expert Layer
+  if (input.archetypes.includes('realtime_collaboration')) {
+    const response = handleRealtime(input);
+    if (response) return response;
+  }
+
+  // Route to Social Expert Layer
+  if (input.archetypes.includes('social_network')) {
+    const response = handleSocial(input);
+    if (response) return response;
+  }
+
+  // Route to Healthcare Expert Layer
+  if (input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa') {
+    const response = handleHealthcare(input);
+    if (response) return response;
+  }
+
+  // Route to AI & Automation Expert Layer (Fallback for non-vertical AI)
+  const aiResponse = handleAIAndAutomation(input);
+  if (aiResponse) return aiResponse;
+
+  // Fallback to Standard Expert Layer
+  return handleDefault(input);
+}
+
+export function recommendArchitecture(input: ArchitectureInput): EngineResponse {
+  const response = getBaseDomainResponse(input);
+  
+  if (response.status === 'success') {
+    response.data = runEnhancers(input, response.data);
+  }
+
+  return response;
+}

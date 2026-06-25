@@ -1,0 +1,480 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { processArchitectureRequest } from './actions';
+import { EngineResponse } from '@/engine/types';
+import { 
+  Terminal, Server, Layers, Cpu, Database, Cloud, 
+  CheckCircle2, XCircle, AlertTriangle, ChevronRight, Zap,
+  DollarSign, Activity, HelpCircle, MessagesSquare, FileText,
+  Search, Bell, User, LayoutTemplate
+} from 'lucide-react';
+
+export default function Home() {
+  const [prompt, setPrompt] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const [result, setResult] = useState<EngineResponse | null>(null);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+
+    setError('');
+    setResult(null);
+
+    startTransition(async () => {
+      try {
+        const output = await processArchitectureRequest(prompt);
+        setResult(output);
+      } catch (err: any) {
+        setError(err.message || 'An error occurred.');
+      }
+    });
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-indigo-500/20">
+      
+      {/* Top Navbar */}
+      <nav className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 shrink-0 z-20 sticky top-0">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center shadow-sm">
+              <Layers className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-sm tracking-tight text-zinc-900">AI Architect</span>
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-zinc-100 rounded-md cursor-pointer transition-colors border border-transparent hover:border-zinc-200">
+            <LayoutTemplate className="w-4 h-4 text-zinc-500" />
+            <span className="text-sm font-medium text-zinc-600">Personal Workspace</span>
+            <span className="bg-zinc-200 text-zinc-500 text-[10px] px-1.5 py-0.5 rounded font-mono ml-2 border border-zinc-300 shadow-sm">PRO</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex relative group">
+            <Search className="w-4 h-4 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input 
+              type="text" 
+              placeholder="Search past reviews..." 
+              className="w-64 h-8 pl-9 pr-3 bg-zinc-50 border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-300 transition-shadow"
+            />
+          </div>
+          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <Bell className="w-5 h-5" />
+          </button>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 border border-zinc-200 shadow-sm overflow-hidden flex items-center justify-center text-white text-xs font-bold ring-2 ring-white cursor-pointer hover:opacity-90 transition-opacity">
+            JS
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Split Layout */}
+      <div className="flex flex-col lg:flex-row flex-grow overflow-hidden h-[calc(100vh-3.5rem)]">
+        
+        {/* LEFT PANE: The Brief (Subtle Background) */}
+        <div className="lg:w-1/3 bg-zinc-50 lg:border-r border-zinc-200 lg:h-full lg:overflow-y-auto flex flex-col p-6 lg:p-10 shrink-0">
+          <header className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">New Architecture Review</h1>
+            <p className="text-zinc-500 text-sm leading-relaxed">
+              Describe your constraints. The engine will evaluate tradeoffs and return a formal technical brief.
+            </p>
+          </header>
+
+          <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
+            <div className="flex flex-col flex-grow mb-4">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Project Brief</label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g., We're building an internal HR platform. 50 engineers. Expected users: 3,000 employees. Priority: reliability..."
+                className="w-full flex-grow p-4 bg-white border border-zinc-200 shadow-sm rounded-lg focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px]"
+                spellCheck="false"
+              />
+            </div>
+            
+            <button
+              type="submit"
+              onClick={(e) => {
+                if (isPending || !prompt.trim()) {
+                  e.preventDefault();
+                }
+              }}
+              className={`w-full flex items-center justify-center gap-2 h-10 rounded-md font-medium transition-colors text-sm shadow-sm ${
+                isPending || !prompt.trim()
+                  ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed opacity-50'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-800'
+              }`}
+            >
+              {isPending ? (
+                <span className="flex items-center gap-2">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                    <Loader className="w-4 h-4" />
+                  </motion.div>
+                  Running Review...
+                </span>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  Run Architecture Review
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* RIGHT PANE: The Report (Pristine White) */}
+        <div className="lg:w-2/3 bg-white lg:h-full lg:overflow-y-auto relative">
+          <AnimatePresence mode="wait">
+            
+            {/* Empty State */}
+            {!result && !error && !isPending && (
+              <motion.div 
+                key="empty"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="h-full flex flex-col items-center justify-center text-center p-8"
+              >
+                <div className="w-12 h-12 mb-4 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-100 shadow-sm">
+                  <Activity className="w-5 h-5 text-zinc-300" />
+                </div>
+                <h3 className="text-zinc-900 font-medium text-sm">No review started</h3>
+                <p className="text-zinc-500 text-sm mt-1">Submit your project brief to begin the tradeoff analysis.</p>
+              </motion.div>
+            )}
+
+            {/* Skeleton Loading State */}
+            {isPending && (
+              <motion.div 
+                key="loading"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="p-8 lg:p-16 max-w-4xl mx-auto w-full space-y-10"
+              >
+                {/* Header Skeleton */}
+                <div className="space-y-4 border-b border-zinc-100 pb-8">
+                  <div className="flex justify-between items-center">
+                    <div className="h-6 w-32 bg-zinc-100 rounded animate-pulse"></div>
+                    <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-10 w-3/4 bg-zinc-100 rounded animate-pulse"></div>
+                  <div className="h-20 w-full bg-zinc-50 rounded animate-pulse mt-4"></div>
+                </div>
+
+                {/* Grid Skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="h-32 bg-zinc-50 rounded-lg animate-pulse border-l-4 border-zinc-200"></div>
+                  <div className="h-32 bg-zinc-50 rounded-lg animate-pulse border-l-4 border-zinc-200"></div>
+                </div>
+
+                {/* List Skeleton */}
+                <div className="space-y-4">
+                  <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-6"></div>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-zinc-50 rounded animate-pulse"></div>
+                      <div className="space-y-2 flex-grow">
+                        <div className="h-4 w-1/3 bg-zinc-100 rounded animate-pulse"></div>
+                        <div className="h-3 w-1/4 bg-zinc-50 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Error State */}
+            {error && !isPending && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="m-8 lg:m-16 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 shadow-sm"
+              >
+                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">{error}</p>
+              </motion.div>
+            )}
+
+            {/* Success State */}
+            {result && result.status === 'success' && !isPending && (
+              <motion.div 
+                key="success"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="p-8 lg:p-16 max-w-4xl mx-auto space-y-12"
+              >
+                {/* Report Header */}
+                <div className="border-b border-zinc-200 pb-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Review Memo</span>
+                    </div>
+                  </div>
+                  
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 mb-6 flex items-center gap-3">
+                    <Layers className="text-indigo-500 shrink-0" />
+                    {result.data.architectureStyle}
+                  </h2>
+                  
+                  <div className="pl-4 border-l-2 border-zinc-200">
+                    <p className="text-sm font-bold text-zinc-900 mb-2">Primary Reasoning:</p>
+                    <ul className="space-y-3">
+                      {result.data.recommended[0]?.reasons.map((reason, j) => (
+                        <li key={j} className="text-sm text-zinc-600 leading-relaxed">
+                          {reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Business Risks (Elevated to top) */}
+                {result.data.businessRisks && result.data.businessRisks.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" /> Existential Business Risks
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {result.data.businessRisks.map((risk, i) => (
+                        <div key={i} className="bg-red-50 border border-red-200 border-l-4 border-l-red-600 rounded-md p-5 shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-bold text-red-900">{risk.risk}</div>
+                            <div className="flex gap-2">
+                              <div className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                Severity: {risk.level}
+                              </div>
+                              <div className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                Likelihood: {risk.likelihood}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm text-red-800/80 leading-relaxed">{risk.reason}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Domain Constraints */}
+                {result.data.domainConstraints && result.data.domainConstraints.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-zinc-500" /> Hard Domain Constraints
+                    </h3>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {result.data.domainConstraints.map((constraint, i) => (
+                        <li key={i} className="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-md">
+                          <CheckCircle2 className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
+                          <span className="text-sm text-zinc-700 leading-snug">{constraint}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Core Validation Questions */}
+                {result.data.coreValidationQuestions && result.data.coreValidationQuestions.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <Layers className="w-4 h-4" /> What We Would Validate First
+                    </h3>
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-md p-5 shadow-sm">
+                      <ol className="list-decimal list-inside space-y-3">
+                        {result.data.coreValidationQuestions.map((question, i) => (
+                          <li key={i} className="text-sm font-medium text-indigo-900 leading-relaxed">
+                            {question}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {/* Critical Unknowns */}
+                {result.data.criticalUnknowns && result.data.criticalUnknowns.length > 0 && (
+                  <div className="space-y-4 mt-6">
+                    <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4 text-amber-500" /> Critical Unknowns
+                    </h3>
+                    <div className="bg-amber-50/50 border border-amber-200/60 rounded-md p-5 shadow-sm">
+                      <ul className="space-y-3">
+                        {result.data.criticalUnknowns.map((q, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0"></div>
+                            <span className="text-sm font-medium text-amber-900 leading-snug">{q}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Strategic Advantages */}
+                {result.data.strategicAdvantages && result.data.strategicAdvantages.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" /> Strategic Advantages
+                    </h3>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {result.data.strategicAdvantages.map((advantage, i) => (
+                        <li key={i} className="flex items-start gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-md">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0"></div>
+                          <span className="text-sm text-emerald-800 leading-snug">{advantage}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Vetoes and Debt (Linear-style left-border cards) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-zinc-100">
+                  {/* Deferred Decisions */}
+                  <div>
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-zinc-400" /> Intentionally Deferred
+                    </h3>
+                    <div className="space-y-4">
+                      {result.data.deferredDecisions.length > 0 ? result.data.deferredDecisions.map((item, i) => (
+                        <div key={i} className="bg-white border border-zinc-200 border-l-4 border-l-red-500 rounded-md p-4 shadow-sm">
+                          <div className="text-sm font-bold text-zinc-900 mb-1">{item.name}</div>
+                          <div className="text-sm text-zinc-600 leading-relaxed">{item.reason}</div>
+                        </div>
+                      )) : (
+                        <div className="text-sm text-zinc-400 italic">No major components deferred.</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Architecture Debt */}
+                  <div>
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-zinc-400" /> Accepted Debt
+                    </h3>
+                    <div className="space-y-4">
+                      {result.data.architectureDebt.length > 0 ? result.data.architectureDebt.map((item, i) => (
+                        <div key={i} className="bg-white border border-zinc-200 border-l-4 border-l-amber-500 rounded-md p-4 shadow-sm">
+                          <div className="text-sm font-bold text-zinc-900 mb-1">{item.debt}</div>
+                          <div className="text-sm text-zinc-600 leading-relaxed">{item.reason}</div>
+                        </div>
+                      )) : (
+                        <div className="text-sm text-zinc-400 italic">No significant architectural debt identified.</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assumptions */}
+                <div className="pt-6 border-t border-zinc-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-zinc-400" /> Core Assumptions
+                    </h3>
+                    {result.data.assumptionRisk && (
+                      <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border
+                        ${result.data.assumptionRisk.level === 'High' ? 'bg-red-50 text-red-600 border-red-200' : 
+                          result.data.assumptionRisk.level === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-200' : 
+                          'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                        Risk Level: {result.data.assumptionRisk.level}
+                      </div>
+                    )}
+                  </div>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    {result.data.assumptions.map((assumption, i) => (
+                      <li key={i} className="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-100 rounded-md">
+                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-1.5 shrink-0" />
+                        <span className="text-sm text-zinc-700 leading-snug">{assumption}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {result.data.assumptionRisk && (
+                    <div className="text-sm text-zinc-600 pl-4 border-l-2 border-zinc-200">
+                      <span className="font-semibold text-zinc-900">Risk Analysis:</span> {result.data.assumptionRisk.reason}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stack & Deployment Overview */}
+                <div className="pt-6 border-t border-zinc-100">
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <Server className="w-4 h-4 text-zinc-400" /> Implementation Overview
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Tech Stack List */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-semibold text-zinc-900 mb-2">Core Stack</h4>
+                      <div className="divide-y divide-zinc-100 border-y border-zinc-100">
+                        {result.data.stack.map((item, i) => (
+                          <div key={i} className="flex items-center gap-4 py-3">
+                            <div className="w-8 h-8 rounded bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
+                              {item.category === 'frontend' && <Terminal className="w-4 h-4 text-zinc-500" />}
+                              {item.category === 'backend' && <Server className="w-4 h-4 text-zinc-500" />}
+                              {item.category === 'database' && <Database className="w-4 h-4 text-zinc-500" />}
+                              {item.category === 'cache' && <Zap className="w-4 h-4 text-zinc-500" />}
+                              {item.category === 'ai' && <Cpu className="w-4 h-4 text-zinc-500" />}
+                              {item.category === 'queue' && <Layers className="w-4 h-4 text-zinc-500" />}
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-zinc-900">{item.name}</div>
+                              <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{item.category}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Infrastructure Overview */}
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                          <Cloud className="w-4 h-4 text-zinc-400" /> Target Deployment
+                        </h4>
+                        <ul className="space-y-2">
+                          {result.data.deployment.map((dep, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm text-zinc-600">
+                              <ChevronRight className="w-3.5 h-3.5 text-zinc-300" />
+                              {dep}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Operating Cost Drivers */}
+                      {result.data.operatingCostDrivers && result.data.operatingCostDrivers.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-zinc-400" /> Estimated Operating Cost Drivers
+                          </h4>
+                          <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4">
+                            <ul className="space-y-3">
+                              {result.data.operatingCostDrivers.map((driver, i) => (
+                                <li key={i} className="flex items-start gap-3">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-2 shrink-0"></div>
+                                  <span className="text-sm text-zinc-700 leading-snug">{driver}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Loader({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+  );
+}
