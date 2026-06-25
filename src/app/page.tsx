@@ -228,6 +228,7 @@ export default function Home() {
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                maxLength={2000}
                 placeholder="e.g., We're building an internal HR platform. 50 engineers. Expected users: 3,000 employees. Priority: reliability..."
                 className={`w-full flex-grow p-4 bg-white border shadow-sm rounded-lg focus:ring-1 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px] ${
                   isOverLimit ? 'border-red-300 focus:border-red-400 focus:ring-red-400' : 'border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400'
