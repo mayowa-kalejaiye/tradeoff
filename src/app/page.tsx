@@ -19,7 +19,7 @@ export default function Home() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
   const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
-  const isOverLimit = wordCount > 300;
+  const isOverLimit = wordCount > 150;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,13 +222,13 @@ export default function Home() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Project Brief</label>
                 <span className={`text-xs font-medium ${isOverLimit ? 'text-red-500 font-bold' : 'text-zinc-400'}`}>
-                  {wordCount} / 300 words
+                  {wordCount} / 150 words
                 </span>
               </div>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                maxLength={2000}
+                maxLength={1000}
                 placeholder="e.g., We're building an internal HR platform. 50 engineers. Expected users: 3,000 employees. Priority: reliability..."
                 className={`w-full flex-grow p-4 bg-white border shadow-sm rounded-lg focus:ring-1 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px] ${
                   isOverLimit ? 'border-red-300 focus:border-red-400 focus:ring-red-400' : 'border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400'
