@@ -1,8 +1,8 @@
 import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, ArchitectureDebt, ArchitectureChallenge, BusinessRisk } from '../types';
 
 export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse | null {
-  const isAutomation = input.projectIdea.toLowerCase().match(/(scrape|scraping|puppeteer|playwright|automation|crawler|bot)/);
-  const isAI = input.archetypes.includes('ai_saas') || input.projectIdea.toLowerCase().match(/(ai|llm|openai|anthropic|chatgpt)/);
+  const isAutomation = input.projectIdea.toLowerCase().match(/\b(scrape|scraping|puppeteer|playwright|automation|crawler|bot)\b/);
+  const isAI = input.archetypes.includes('ai_saas') || input.projectIdea.toLowerCase().match(/\b(ai|llm|openai|anthropic|chatgpt)\b/);
 
   // We only handle this if it's explicitly automation/scraping OR AI SaaS.
   if (!isAutomation && !input.archetypes.includes('ai_saas')) {

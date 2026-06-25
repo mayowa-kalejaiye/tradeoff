@@ -8,6 +8,7 @@ import { handleAIAndAutomation } from './domains/ai';
 import { handleCodingAssistant } from './domains/coding_assistant';
 import { handleWeb3 } from './domains/web3';
 import { handleIoT } from './domains/iot';
+import { handlePaaS } from './domains/paas';
 import { handleDefault } from './domains/default';
 import { runEnhancers } from './enhancers';
 
@@ -58,6 +59,12 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
   // Route to IoT/Hardware Expert Layer
   if (input.archetypes.includes('iot_platform')) {
     const response = handleIoT(input);
+    if (response) return response;
+  }
+
+  // Route to Developer Platform / PaaS Expert Layer
+  if (input.archetypes.includes('paas')) {
+    const response = handlePaaS(input);
     if (response) return response;
   }
 

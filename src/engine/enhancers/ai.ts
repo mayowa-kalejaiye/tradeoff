@@ -1,7 +1,7 @@
 import { ArchitectureInput, ArchitectureOutput } from '../types';
 
 export function enhanceAI(input: ArchitectureInput, output: ArchitectureOutput): ArchitectureOutput {
-  if (!input.projectIdea || !input.projectIdea.toLowerCase().match(/(ai|llm|openai|anthropic|chatgpt|note generation|summarization|gpt)/)) {
+  if (!input.projectIdea || !input.projectIdea.toLowerCase().match(/\b(ai|llm|openai|anthropic|chatgpt|note generation|summarization|gpt)\b/)) {
     return output;
   }
 

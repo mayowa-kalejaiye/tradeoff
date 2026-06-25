@@ -12,6 +12,7 @@ export type ProjectArchetype =
   | 'healthcare'
   | 'web3_dapp'
   | 'iot_platform'
+  | 'paas'
   | 'other';
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';
