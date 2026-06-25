@@ -6,6 +6,8 @@ import { handleHealthcare } from './domains/healthcare';
 import { handleInternal } from './domains/internal';
 import { handleAIAndAutomation } from './domains/ai';
 import { handleCodingAssistant } from './domains/coding_assistant';
+import { handleWeb3 } from './domains/web3';
+import { handleIoT } from './domains/iot';
 import { handleDefault } from './domains/default';
 import { runEnhancers } from './enhancers';
 
@@ -44,6 +46,18 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
   // Route to AI Coding Assistant Expert Layer
   if (input.archetypes.includes('ai_coding_assistant')) {
     const response = handleCodingAssistant(input);
+    if (response) return response;
+  }
+
+  // Route to Web3/Crypto Expert Layer
+  if (input.archetypes.includes('web3_dapp')) {
+    const response = handleWeb3(input);
+    if (response) return response;
+  }
+
+  // Route to IoT/Hardware Expert Layer
+  if (input.archetypes.includes('iot_platform')) {
+    const response = handleIoT(input);
     if (response) return response;
   }
 

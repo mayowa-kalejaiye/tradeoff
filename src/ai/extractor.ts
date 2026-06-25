@@ -8,7 +8,7 @@ const extractionSchema = z.object({
   projectIdea: z.string().describe('A concise summary of what the user is trying to build. Leave empty if isValidRequest is false.'),
   archetypes: z.array(z.enum([
     'ecommerce', 'marketplace', 'saas', 'fintech', 'social_network', 
-    'content_platform', 'realtime_collaboration', 'ai_saas', 'ai_coding_assistant', 'internal_tool', 'other'
+    'content_platform', 'realtime_collaboration', 'ai_saas', 'ai_coding_assistant', 'internal_tool', 'healthcare', 'web3_dapp', 'iot_platform', 'other'
   ])).describe('The primary categories that best describe this project.'),
   teamSize: z.number().describe('The number of developers working on the project. Default to 1 if unknown or solo.'),
   expectedUsers: z.number().describe('The realistic expected number of users/MAU. Default to 1000 if not specified.'),

@@ -10,6 +10,8 @@ export type ProjectArchetype =
   | 'ai_coding_assistant'
   | 'internal_tool'
   | 'healthcare'
+  | 'web3_dapp'
+  | 'iot_platform'
   | 'other';
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';
