@@ -200,6 +200,45 @@ export default function Home() {
               </motion.div>
             )}
 
+            {/* Uncertainty / Pushback State */}
+            {result && result.status === 'uncertainty' && !isPending && (
+              <motion.div 
+                key="uncertainty"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="p-8 lg:p-16 max-w-2xl mx-auto space-y-6"
+              >
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                      <HelpCircle className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-amber-900 tracking-tight">Clarification Required</h2>
+                  </div>
+                  <p className="text-amber-800/90 text-sm leading-relaxed mb-6 font-medium">
+                    {result.reason}
+                  </p>
+                  
+                  <div className="bg-white rounded-md border border-amber-100 p-5 space-y-4">
+                    <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" /> Questions I Need Answered
+                    </h3>
+                    <ul className="space-y-3">
+                      {result.questions.map((q, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></div>
+                          <span className="text-sm font-medium text-zinc-800 leading-snug">{q}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <p className="text-xs text-amber-700/70 mt-6 italic">
+                    Without these answers, any architecture recommendation has low confidence. Please update your prompt with this context.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             {/* Success State */}
             {result && result.status === 'success' && !isPending && (
               <motion.div 

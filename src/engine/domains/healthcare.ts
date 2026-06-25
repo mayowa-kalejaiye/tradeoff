@@ -1,6 +1,29 @@
 import { ArchitectureInput, EngineResponse, BusinessRisk } from '../types';
 
 export function handleHealthcare(input: ArchitectureInput): EngineResponse | null {
+  const isHealthcare = input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa';
+  if (!isHealthcare) return null;
+
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const mentionsPHI = promptText.match(/(phi|patient data|health records)/);
+  const mentionsIntegrations = promptText.match(/(epic|cerner|ehr|emr|hl7|fhir)/);
+  const mentionsVideo = promptText.match(/(video|telehealth)/);
+
+  if (!mentionsPHI && !mentionsIntegrations && promptText.length < 100) {
+    return {
+      status: 'uncertainty',
+      reason: 'Healthcare architectures are completely dictated by compliance boundaries. Recommending a stack without knowing your data payload and integration points is dangerous.',
+      questions: [
+        'Are you storing Protected Health Information (PHI) directly, or just anonymized metadata?',
+        'Do you need to integrate with legacy EHR systems like Epic or Cerner via HL7/FHIR?',
+        'Is real-time video consultation required?',
+        'Which countries will you operate in? (HIPAA vs GDPR vs PIPEDA radically changes the cloud region strategy)'
+      ]
+    };
+  }
+
   // Speed vs Compliance Collision
   if (input.complianceLevel === 'hipaa' && input.priority === 'speed' && input.teamSize <= 3) {
     return {
@@ -219,5 +242,20 @@ export function handleHealthcare(input: ArchitectureInput): EngineResponse | nul
     };
   }
 
-  return null;
+  // Fallback for general healthcare that passed the pushback but doesn't hit specific enterprise/speed rules
+  return {
+    status: 'success',
+    data: {
+      architectureStyle: 'Compliance PaaS (Managed)',
+      confidenceScores: { architecture: 70, patternSelection: 80, deployment: 90, cost: 60 },
+      confidenceBreakdown: { strongSignals: ['Healthcare domain'], weakSignals: [] },
+      missingInformation: [], assumptions: [], assumptionRisk: { level: 'Medium', reason: 'Generic healthcare fallback' },
+      revisitWhen: [], upgradePath: [], stack: [
+        { name: 'Next.js', category: 'frontend' }, { name: 'PostgreSQL (BAA-signed)', category: 'database' }
+      ],
+      deployment: ['HIPAA Compliant PaaS (Aptible/Medplum)'], recommended: [], deferredDecisions: [],
+      architectureDebt: [], challenges: [], businessRisks: [], domainConstraints: ['Strict BAA required'],
+      coreValidationQuestions: [], criticalUnknowns: [], strategicAdvantages: [], blueprint: [], operatingCostDrivers: []
+    }
+  };
 }

@@ -8,6 +8,25 @@ export function handleIoT(input: ArchitectureInput): EngineResponse | null {
     return null;
   }
 
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const mentionsFrequency = promptText.match(/(second|minute|hour|hz|frequency|real-time)/);
+  const mentionsConnectivity = promptText.match(/(offline|cellular|wifi|bluetooth|lora|intermittent)/);
+
+  if (!mentionsFrequency && !mentionsConnectivity && promptText.length < 100) {
+    return {
+      status: 'uncertainty',
+      reason: 'IoT architectures are entirely dictated by payload frequency and connectivity constraints. Recommending a stack without knowing these variables is malpractice.',
+      questions: [
+        'What is the telemetry payload frequency per device? (1 ping/second vs 1 ping/hour completely changes the database)',
+        'How do devices connect? (Stable WiFi vs intermittent Cellular/LoRaWAN)',
+        'Do you require bi-directional control (sending commands to devices), or just one-way telemetry ingestion?',
+        'How are you handling device provisioning and certificate rotation?'
+      ]
+    };
+  }
+
   const stack: StackComponent[] = [
     { name: 'MQTT Broker (Mosquitto / AWS IoT Core)', category: 'backend' },
     { name: 'Time-Series Database (TimescaleDB / InfluxDB)', category: 'database' },
@@ -23,18 +42,31 @@ export function handleIoT(input: ArchitectureInput): EngineResponse | null {
       reason: 'Thousands of devices pinging telemetry every second will explode your database storage costs if you do not aggressively downsample and partition data.'
     },
     {
-      risk: 'Device Provisioning & Security',
+      risk: 'Firmware Rollback Failures (Bricking)',
+      level: 'Critical',
+      likelihood: 'Medium',
+      reason: 'If an Over-The-Air (OTA) update contains a bug that drops network connectivity, you permanently brick the entire fleet. You must build A/B partition fallbacks.'
+    },
+    {
+      risk: 'Device Provisioning & Certificate Rotation',
+      level: 'High',
+      likelihood: 'High',
+      reason: 'If devices share a single hardcoded credential, a single breach compromises the entire fleet. Certificates must be uniquely provisioned and rotatable.'
+    },
+    {
+      risk: 'Hardware Supply Chain Lock-in',
       level: 'High',
       likelihood: 'Medium',
-      reason: 'If devices share a single hardcoded credential, a single breach compromises the entire fleet. Certificates must be rotated securely.'
+      reason: 'If you tightly couple your device agent to a specific silicon vendor, the next chip shortage will halt your business.'
     }
   ];
 
   const domainConstraints: string[] = [
     'Handling intermittent connectivity and offline buffering on the edge',
     'Asynchronous command & control (C2) messaging to sleeping devices',
-    'Over-The-Air (OTA) firmware update orchestration',
-    'Strict payload size optimization to save bandwidth/battery (e.g., Protobuf over JSON)'
+    'Over-The-Air (OTA) firmware update orchestration with rollback',
+    'Strict payload size optimization to save bandwidth/battery (e.g., Protobuf over JSON)',
+    'Battery life optimization (wake-sleep cycles dictate network protocols)'
   ];
 
   const coreValidationQuestions: string[] = [

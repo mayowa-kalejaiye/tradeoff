@@ -8,6 +8,25 @@ export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
     return null;
   }
 
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const mentionsCustody = promptText.match(/(custodial|non-custodial|wallet)/);
+  const mentionsChain = promptText.match(/(ethereum|solana|polygon|base|arbitrum|layer 2|l2)/);
+
+  if (!mentionsCustody && !mentionsChain && promptText.length < 100) {
+    return {
+      status: 'uncertainty',
+      reason: 'Web3 architectures depend fundamentally on your trust model and target chain. Recommending a stack without knowing these variables is dangerous.',
+      questions: [
+        'Is your application custodial (you hold the keys) or non-custodial (users hold the keys)?',
+        'Which specific blockchain network are you targeting? (Ethereum L1 vs Solana vs Base completely changes the stack)',
+        'Does your protocol rely on real-world data feeds (Oracles)?',
+        'How will you manage gas fees and transaction volatility for users?'
+      ]
+    };
+  }
+
   const stack: StackComponent[] = [
     { name: 'Next.js (Frontend)', category: 'frontend' },
     { name: 'Ethers.js / Viem (Client)', category: 'frontend' },
@@ -19,16 +38,28 @@ export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
 
   const businessRisks: BusinessRisk[] = [
     {
-      risk: 'Smart Contract Vulnerability',
+      risk: 'Smart Contract Vulnerability (Immutability)',
       level: 'Critical',
       likelihood: 'Medium',
-      reason: 'Immutability means zero room for bugs. A single vulnerability in your smart contract can drain all user funds instantly.'
+      reason: 'Immutability means zero room for bugs. A single re-entrancy vulnerability in your smart contract can drain all user funds instantly.'
+    },
+    {
+      risk: 'MEV (Miner Extractable Value) Attacks',
+      level: 'Critical',
+      likelihood: 'High',
+      reason: 'If your transactions involve swapping or financial value, searcher bots will front-run and sandwich attack your users unless explicitly mitigated.'
+    },
+    {
+      risk: 'Bridge & Oracle Hacks',
+      level: 'Critical',
+      likelihood: 'Medium',
+      reason: 'Cross-chain bridges and centralized Oracle dependencies (Chainlink) are the #1 attack vector in DeFi. Minimizing bridge trust is essential.'
     },
     {
       risk: 'Regulatory & Compliance Risk',
       level: 'High',
       likelihood: 'High',
-      reason: 'Tokenomics and DeFi protocols are subject to rapidly changing international securities laws.'
+      reason: 'Tokenomics and DeFi protocols are subject to rapidly changing international securities laws (SEC, MiCA).'
     }
   ];
 
@@ -36,7 +67,8 @@ export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
     'Strict separation of on-chain (immutable) vs off-chain (mutable) data',
     'Gas cost optimization for contract deployments and user transactions',
     'Handling asynchronous block confirmations and chain reorganizations',
-    'Wallet connection UX (MetaMask, WalletConnect) and handling disconnected states'
+    'Wallet connection UX (MetaMask, WalletConnect) and handling disconnected states',
+    'Smart contract upgrade strategy (e.g., Transparent Proxies or Diamond pattern)'
   ];
 
   const coreValidationQuestions: string[] = [
