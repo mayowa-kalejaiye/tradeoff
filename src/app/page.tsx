@@ -18,9 +18,12 @@ export default function Home() {
   const [error, setError] = useState('');
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
+  const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
+  const isOverLimit = wordCount > 300;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || isOverLimit) return;
 
     setError('');
     setResult(null);
@@ -216,12 +219,19 @@ export default function Home() {
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
             <div className="flex flex-col flex-grow mb-4">
-              <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Project Brief</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Project Brief</label>
+                <span className={`text-xs font-medium ${isOverLimit ? 'text-red-500 font-bold' : 'text-zinc-400'}`}>
+                  {wordCount} / 300 words
+                </span>
+              </div>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="e.g., We're building an internal HR platform. 50 engineers. Expected users: 3,000 employees. Priority: reliability..."
-                className="w-full flex-grow p-4 bg-white border border-zinc-200 shadow-sm rounded-lg focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px]"
+                className={`w-full flex-grow p-4 bg-white border shadow-sm rounded-lg focus:ring-1 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px] ${
+                  isOverLimit ? 'border-red-300 focus:border-red-400 focus:ring-red-400' : 'border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400'
+                }`}
                 spellCheck="false"
               />
             </div>
@@ -229,12 +239,12 @@ export default function Home() {
             <button
               type="submit"
               onClick={(e) => {
-                if (isPending || !prompt.trim()) {
+                if (isPending || !prompt.trim() || isOverLimit) {
                   e.preventDefault();
                 }
               }}
               className={`w-full flex items-center justify-center gap-2 h-10 rounded-md font-medium transition-colors text-sm shadow-sm ${
-                isPending || !prompt.trim()
+                isPending || !prompt.trim() || isOverLimit
                   ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed opacity-50'
                   : 'bg-zinc-900 text-white hover:bg-zinc-800'
               }`}
@@ -246,6 +256,11 @@ export default function Home() {
                   </motion.div>
                   Running Review...
                 </span>
+              ) : isOverLimit ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  Word Limit Exceeded
+                </>
               ) : (
                 <>
                   <FileText className="w-4 h-4" />
