@@ -5,6 +5,7 @@ import { handleSocial } from './domains/social';
 import { handleHealthcare } from './domains/healthcare';
 import { handleInternal } from './domains/internal';
 import { handleAIAndAutomation } from './domains/ai';
+import { handleCodingAssistant } from './domains/coding_assistant';
 import { handleDefault } from './domains/default';
 import { runEnhancers } from './enhancers';
 
@@ -37,6 +38,12 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
   // Route to Healthcare Expert Layer
   if (input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa') {
     const response = handleHealthcare(input);
+    if (response) return response;
+  }
+
+  // Route to AI Coding Assistant Expert Layer
+  if (input.archetypes.includes('ai_coding_assistant')) {
+    const response = handleCodingAssistant(input);
     if (response) return response;
   }
 

@@ -30,6 +30,8 @@ export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse 
   let assumptionRisk: any = { level: 'Low', reason: 'Async jobs handle failures well.' };
   const revisitWhen: string[] = [];
   const upgradePath: any[] = [];
+  const blueprint: any[] = [];
+  const operatingCostDrivers: string[] = [];
 
   // Default to Monolith + Queues for this domain
   let architectureStyle = 'Modular Monolith + Queue Workers';
@@ -108,6 +110,18 @@ export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse 
       { stage: 'Stage 2', trigger: 'Target site bans IPs', description: 'Introduce proxy rotation layer (BrightData, ScraperAPI).' },
       { stage: 'Stage 3', trigger: 'High throughput needed', description: 'Extract automation layer into containerized AWS Batch / ECS tasks.' }
     );
+    
+    blueprint.push(
+      { category: 'Frontend', packages: ['next', 'react', 'react-dom'] },
+      { category: 'Backend', packages: ['playwright', 'bullmq', 'ioredis'] },
+      { category: 'Database', packages: ['pg', 'drizzle-orm'] }
+    );
+    
+    operatingCostDrivers.push(
+      'Browser compute (Playwright sessions are memory-intensive)',
+      'Proxy network bandwidth (residential proxies for avoiding bans)',
+      'Queue storage (Redis memory for BullMQ jobs)'
+    );
   }
 
   if (isAI) {
@@ -152,6 +166,9 @@ export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse 
         { stage: 'Stage 3', trigger: 'Latency becomes critical', description: 'Move to streaming responses with WebSockets.' }
       );
     }
+    
+    blueprint.push({ category: 'AI', packages: ['openai', 'ai-sdk'] });
+    operatingCostDrivers.push('LLM token usage (input/output/reasoning)');
 
     challenges.push({
       name: 'LLM Hallucinations & Latency',
@@ -213,18 +230,8 @@ export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse 
       deferredDecisions,
       architectureDebt,
       challenges,
-      blueprint: [
-        { category: 'Frontend', packages: ['next', 'react', 'react-dom'] },
-        { category: 'Backend', packages: ['playwright', 'bullmq', 'ioredis'] },
-        { category: 'Database', packages: ['pg', 'drizzle-orm'] },
-        { category: 'AI', packages: ['openai'] }
-      ],
-      operatingCostDrivers: [
-        'Browser compute (Playwright sessions are memory-intensive)',
-        'Proxy network bandwidth (residential proxies for avoiding bans)',
-        'LLM token usage (resume tailoring and DOM parsing)',
-        'Queue storage (Redis memory for BullMQ jobs)'
-      ]
+      blueprint,
+      operatingCostDrivers
     }
   };
 }

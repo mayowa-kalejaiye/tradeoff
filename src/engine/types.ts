@@ -7,6 +7,7 @@ export type ProjectArchetype =
   | 'content_platform' 
   | 'realtime_collaboration' 
   | 'ai_saas' 
+  | 'ai_coding_assistant'
   | 'internal_tool'
   | 'healthcare'
   | 'other';
