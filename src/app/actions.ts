@@ -26,7 +26,16 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     return output;
   } catch (error) {
     console.error('Error processing architecture request:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred.';
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Catch rate limit errors from Gemini API
+    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+      return { 
+        status: 'error', 
+        message: 'Wow, we are getting a lot of traffic right now! The AI engine is taking a quick breather. Please try again in 10 seconds.' 
+      };
+    }
+
     return { status: 'error', message: `Server Error: ${errorMessage}` };
   }
 }
