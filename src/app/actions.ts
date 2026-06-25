@@ -19,6 +19,7 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     return output;
   } catch (error) {
     console.error('Error processing architecture request:', error);
-    throw new Error('Failed to process architecture request. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred.';
+    return { status: 'error', message: `Server Error: ${errorMessage}` };
   }
 }

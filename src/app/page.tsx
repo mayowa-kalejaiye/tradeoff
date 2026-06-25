@@ -27,7 +27,11 @@ export default function Home() {
     startTransition(async () => {
       try {
         const output = await processArchitectureRequest(prompt);
-        setResult(output);
+        if (output.status === 'error') {
+          setError(output.message);
+        } else {
+          setResult(output);
+        }
       } catch (err: any) {
         setError(err.message || 'An error occurred.');
       }

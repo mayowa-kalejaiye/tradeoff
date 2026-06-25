@@ -1,7 +1,7 @@
 import { ArchitectureInput, ArchitectureOutput } from '../types';
 
 export function enhanceVideo(input: ArchitectureInput, output: ArchitectureOutput): ArchitectureOutput {
-  if (!input.projectIdea.toLowerCase().match(/(video|webrtc|agora|daily\.co|twilio|consultation)/)) {
+  if (!input.projectIdea || !input.projectIdea.toLowerCase().match(/(video|webrtc|agora|daily\.co|twilio|consultation)/)) {
     return output;
   }
 

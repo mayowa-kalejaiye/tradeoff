@@ -121,4 +121,5 @@ export interface ArchitectureOutput {
 
 export type EngineResponse = 
   | { status: 'success'; data: ArchitectureOutput }
-  | { status: 'uncertainty'; reason: string; questions: string[] };
+  | { status: 'uncertainty'; reason: string; questions: string[] }
+  | { status: 'error'; message: string };

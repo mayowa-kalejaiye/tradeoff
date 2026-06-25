@@ -1,7 +1,7 @@
 import { ArchitectureInput, ArchitectureOutput } from '../types';
 
 export function enhanceEnterprise(input: ArchitectureInput, output: ArchitectureOutput): ArchitectureOutput {
-  if (!input.projectIdea.toLowerCase().match(/(epic|cerner|hl7|fhir|sso|saml|enterprise integration)/)) {
+  if (!input.projectIdea || !input.projectIdea.toLowerCase().match(/(epic|cerner|hl7|fhir|sso|saml|enterprise integration)/)) {
     return output;
   }
 
