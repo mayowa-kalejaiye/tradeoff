@@ -19,6 +19,10 @@ export type ProjectArchetype =
   | 'video_streaming'
   | 'cybersecurity'
   | 'ai_infrastructure'
+  | 'gis_mapping'
+  | 'ride_hailing'
+  | 'messaging'
+  | 'ci_cd'
   | 'other';
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';

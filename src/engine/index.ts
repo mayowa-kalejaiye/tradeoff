@@ -15,6 +15,10 @@ import { handleAdTech } from './domains/adtech';
 import { handleStreaming } from './domains/streaming';
 import { handleCybersecurity } from './domains/cybersecurity';
 import { handleAIInfra } from './domains/ai_infra';
+import { handleGIS } from './domains/gis';
+import { handleMessaging } from './domains/messaging';
+import { handleRideHailing } from './domains/ride_hailing';
+import { handleCICD } from './domains/ci_cd';
 import { handleDefault } from './domains/default';
 import { runEnhancers } from './enhancers';
 
@@ -101,6 +105,26 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
 
   if (input.archetypes.includes('ai_infrastructure')) {
     const response = handleAIInfra(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('gis_mapping')) {
+    const response = handleGIS(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('messaging')) {
+    const response = handleMessaging(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('ride_hailing')) {
+    const response = handleRideHailing(input);
+    if (response) return response;
+  }
+
+  if (input.archetypes.includes('ci_cd')) {
+    const response = handleCICD(input);
     if (response) return response;
   }
 
