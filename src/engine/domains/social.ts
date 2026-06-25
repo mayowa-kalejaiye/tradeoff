@@ -1,6 +1,24 @@
 import { ArchitectureInput, EngineResponse } from '../types';
 
 export function handleSocial(input: ArchitectureInput): EngineResponse | null {
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const mentionsAlgorithm = promptText.match(/(algorithm|ai|ml|rank|chronological)/);
+  const mentionsModeration = promptText.match(/(moderation|nsfw|report|ban)/);
+
+  if (!mentionsAlgorithm && !mentionsModeration && promptText.length < 100) {
+    return {
+      status: 'uncertainty',
+      reason: 'Social network architectures are defined by their feed generation complexity and moderation liabilities.',
+      questions: [
+        'Is your main news feed strictly chronological, or does it require algorithmic/AI ranking?',
+        'How are you handling content moderation and NSFW filtering? (Automated vs Manual vs Deferred)',
+        'Is the network primarily read-heavy (like Twitter/X) or write-heavy (like a direct messaging app)?'
+      ]
+    };
+  }
+
   // The Premature Scaling Trap
   if (input.expectedUsers > 1000000 && input.teamSize <= 3 && input.priority === 'speed') {
     return {

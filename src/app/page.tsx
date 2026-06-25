@@ -16,6 +16,7 @@ export default function Home() {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<EngineResponse | null>(null);
   const [error, setError] = useState('');
+  const [answers, setAnswers] = useState<Record<number, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +28,37 @@ export default function Home() {
     startTransition(async () => {
       try {
         const output = await processArchitectureRequest(prompt);
+        if (output.status === 'error') {
+          setError(output.message);
+        } else {
+          setResult(output);
+        }
+      } catch (err: any) {
+        setError(err.message || 'An error occurred.');
+      }
+    });
+  };
+
+  const handleRetryWithAnswers = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (result?.status !== 'uncertainty') return;
+
+    const answerText = Object.entries(answers)
+      .filter(([_, ans]) => ans.trim() !== '')
+      .map(([index, ans]) => `Q: ${result.questions[parseInt(index)]}\nA: ${ans}`)
+      .join('\n\n');
+    
+    if (!answerText) return;
+
+    const newPrompt = prompt + '\n\n=== CLARIFICATIONS ===\n' + answerText;
+    setPrompt(newPrompt);
+    setAnswers({});
+    setError('');
+    setResult(null);
+    
+    startTransition(async () => {
+      try {
+        const output = await processArchitectureRequest(newPrompt);
         if (output.status === 'error') {
           setError(output.message);
         } else {
@@ -222,19 +254,37 @@ export default function Home() {
                     <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" /> Questions I Need Answered
                     </h3>
-                    <ul className="space-y-3">
+                    <ul className="space-y-4">
                       {result.questions.map((q, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></div>
-                          <span className="text-sm font-medium text-zinc-800 leading-snug">{q}</span>
+                        <li key={i} className="flex flex-col gap-2">
+                          <label className="flex items-start gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></div>
+                            <span className="text-sm font-medium text-zinc-800 leading-snug">{q}</span>
+                          </label>
+                          <input 
+                            type="text"
+                            value={answers[i] || ''}
+                            onChange={(e) => setAnswers({...answers, [i]: e.target.value})}
+                            placeholder="Your answer..."
+                            className="w-full ml-4.5 bg-zinc-50 border border-amber-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-md text-sm p-2.5 outline-none transition-all placeholder-zinc-400 text-zinc-900"
+                          />
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <p className="text-xs text-amber-700/70 mt-6 italic">
-                    Without these answers, any architecture recommendation has low confidence. Please update your prompt with this context.
-                  </p>
+                  <div className="pt-4 border-t border-amber-200/50 flex items-center justify-between">
+                    <p className="text-xs text-amber-700/70 italic">
+                      Without these answers, any architecture recommendation has low confidence.
+                    </p>
+                    <button 
+                      onClick={handleRetryWithAnswers}
+                      disabled={Object.values(answers).every(a => !a.trim())}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-md shadow-sm transition-colors"
+                    >
+                      Update Brief & Retry
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}

@@ -1,13 +1,19 @@
 import { ArchitectureInput, ArchitectureOutput, EngineResponse, BusinessRisk, ArchitectureChallenge } from '../types';
 
 export function handleFintech(input: ArchitectureInput): EngineResponse | null {
-  // Uncertainty checks
-  if (input.expectedUsers > 1000 && (!input.transactionVolume || input.transactionVolume === 'unknown')) {
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const mentionsPCI = promptText.match(/(pci|credit card|stripe|plaid|payment gateway|tokenization)/);
+  const mentionsCustody = promptText.match(/(ledger|custody|money transmitter|hold funds|wallet|balance)/);
+
+  if (!mentionsPCI && !mentionsCustody && promptText.length < 100) {
     return {
       status: 'uncertainty',
-      reason: 'Fintech architectures are dictated by transaction volume and auditability, not just user count.',
+      reason: 'Fintech architectures carry massive regulatory and financial liability. Recommending a stack without knowing your custody model is dangerous.',
       questions: [
-        'What is the expected transaction volume per second?',
+        'Are you holding user funds directly (requiring a ledger and Money Transmitter License), or just integrating with a BaaS provider?',
+        'Will your system touch raw credit card PANs (PCI-DSS Level 1 scope), or will you use third-party tokenization (e.g., Stripe Elements)?',
         'Do you require strict event-sourcing for compliance audits, or is standard relational durability enough?'
       ]
     };

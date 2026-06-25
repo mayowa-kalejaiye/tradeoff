@@ -1,13 +1,21 @@
 import { ArchitectureInput, EngineResponse } from '../types';
 
 export function handleRealtime(input: ArchitectureInput): EngineResponse | null {
-  if (input.expectedUsers > 10000 && (!input.userMetric || input.userMetric === 'unknown' || input.userMetric === 'registered')) {
+  const promptText = input.projectIdea.toLowerCase();
+  
+  // Principal Engineer Pushback
+  const isMissingMetrics = input.expectedUsers > 10000 && (!input.userMetric || input.userMetric === 'unknown' || input.userMetric === 'registered');
+  const mentionsSync = promptText.match(/(crdt|operational transformation|ot|websocket|pubsub|sync|yjs|automerge)/);
+
+  if ((isMissingMetrics || !mentionsSync) && promptText.length < 100) {
     return {
       status: 'uncertainty',
-      reason: `You mentioned building a real-time collaboration app for ${input.expectedUsers.toLocaleString()} users. Real-time apps scale exponentially based on concurrent connections, not registered accounts.`,
+      reason: 'Real-time collaboration architectures scale completely differently based on their conflict resolution strategy and concurrent connection volume.',
       questions: [
-        'What is the expected peak concurrent user count?',
-        'How intense is the collaboration? (e.g. chat messages vs 60fps multiplayer game state sync)'
+        'What is the expected peak concurrent user count? (Real-time scales by active sockets, not registered users)',
+        'How are you handling concurrent edits? (CRDTs like Yjs, Operational Transformation, or simple Last-Write-Wins?)',
+        'Does the real-time state need to be persisted permanently, or is it ephemeral (e.g., live cursors)?',
+        'What happens when a user drops offline and reconnects 5 minutes later?'
       ]
     };
   }
