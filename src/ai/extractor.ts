@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { ArchitectureInput } from '../engine/types';
 
 const extractionSchema = z.object({
-  projectIdea: z.string().describe('A concise summary of what the user is trying to build.'),
+  isValidRequest: z.boolean().describe('True if the user is actually describing a software application/project to build. False if they are asking general questions like "what is your name", making small talk, or typing spam/gibberish.'),
+  projectIdea: z.string().describe('A concise summary of what the user is trying to build. Leave empty if isValidRequest is false.'),
   archetypes: z.array(z.enum([
     'ecommerce', 'marketplace', 'saas', 'fintech', 'social_network', 
     'content_platform', 'realtime_collaboration', 'ai_saas', 'internal_tool', 'other'

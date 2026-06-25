@@ -18,6 +18,7 @@ export type TransactionVolume = 'low' | 'medium' | 'high' | 'unknown';
 export type ComplianceLevel = 'pci_dss' | 'hipaa' | 'soc2' | 'unknown';
 
 export interface ArchitectureInput {
+  isValidRequest: boolean;
   projectIdea: string;
   archetypes: ProjectArchetype[];
   teamSize: number;

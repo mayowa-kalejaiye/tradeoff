@@ -13,6 +13,13 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     // 1. Extract structured data from the prompt using AI
     const extractedInput = await extractArchitectureInput(prompt);
 
+    if (extractedInput.isValidRequest === false) {
+      return { 
+        status: 'error', 
+        message: 'I can only analyze software projects. Please describe a specific application, system, or platform you want to build.' 
+      };
+    }
+
     // 2. Run the deterministic Rules Engine
     const output = recommendArchitecture(extractedInput);
 

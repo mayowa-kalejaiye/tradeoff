@@ -33,9 +33,10 @@ for (const archetype of archetypes) {
           count++;
           
           const input: ArchitectureInput = {
-            projectIdea: 'Automated test scenario',
+            isValidRequest: true,
+            projectIdea: `Testing ${archetype} at ${priority} priority for ${expectedUsers} users`,
             archetypes: [archetype],
-            teamSize,
+            teamSize: 2,
             expectedUsers,
             priority,
             complianceLevel: compliance,
@@ -56,15 +57,20 @@ for (const archetype of archetypes) {
             continue;
           }
 
+          if (response.status === 'error') {
+            results.push(`**Error**: ${response.message}\n`);
+            continue;
+          }
+
           results.push(`- **Recommended Pattern**: ${response.data.architectureStyle}`);
           results.push(`- **Confidence Scores**: Arch: ${response.data.confidenceScores.architecture}%, Pattern: ${response.data.confidenceScores.patternSelection}%, Deploy: ${response.data.confidenceScores.deployment}%, Cost: ${response.data.confidenceScores.cost}%`);
           if (response.data.deferredDecisions.length > 0) {
             results.push(`- **Deferred Decisions**:`);
-            response.data.deferredDecisions.forEach(d => results.push(`  - ❌ ${d.name} (*${d.reason}*)`));
+            response.data.deferredDecisions.forEach((d: any) => results.push(`  - ❌ ${d.name} (*${d.reason}*)`));
           }
           if (response.data.architectureDebt.length > 0) {
             results.push(`- **Architecture Debt**:`);
-            response.data.architectureDebt.forEach(d => results.push(`  - ✓ ${d.debt} (*${d.reason}*)`));
+            response.data.architectureDebt.forEach((d: any) => results.push(`  - ✓ ${d.debt} (*${d.reason}*)`));
           }
           if (response.data.assumptionRisk) {
             results.push(`- **Assumption Risk**: ${response.data.assumptionRisk.level} (*${response.data.assumptionRisk.reason}*)`);
