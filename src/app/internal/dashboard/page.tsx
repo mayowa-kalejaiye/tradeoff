@@ -2,6 +2,8 @@ import React from 'react';
 import { getDashboardMetrics } from './actions';
 import { Activity, Clock, FileWarning, TrendingUp } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
 
