@@ -5,6 +5,7 @@ import { recommendArchitecture } from '@/engine';
 import { EngineResponse } from '@/engine/types';
 import { db } from '@/db';
 import { architectureReviews } from '@/db/schema';
+import { sql } from 'drizzle-orm';
 
 export async function processArchitectureRequest(prompt: string): Promise<EngineResponse> {
   if (!prompt || prompt.trim() === '') {
@@ -38,10 +39,10 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
       // Note: We deliberately exclude the prompt for privacy
       await db.insert(architectureReviews).values([{
         status: 'success',
-        extractedDomains: extractedInput.archetypes.map(a => a.name),
+        extractedDomains: sql`${JSON.stringify(extractedInput.archetypes.map(a => a.name))}::jsonb` as any,
         architectureStyle: output.data.architectureStyle,
-        topRisks: output.data.businessRisks.map(r => r.risk),
-        blindSpots: output.data.domainBlindSpots || [],
+        topRisks: sql`${JSON.stringify(output.data.businessRisks.map(r => r.risk))}::jsonb` as any,
+        blindSpots: sql`${JSON.stringify(output.data.domainBlindSpots || [])}::jsonb` as any,
         generationTimeMs: Date.now() - startTime,
       }]);
     }

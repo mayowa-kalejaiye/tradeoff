@@ -1,23 +1,32 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import 'dotenv/config';
+import { db, client } from './src/db/index';
+import { architectureReviews } from './src/db/schema';
+import { sql } from 'drizzle-orm';
 
-const connectionString = process.env.DATABASE_URL!;
-console.log('Connecting to', connectionString.substring(0, 30) + '...');
-
-const client = postgres(connectionString, { prepare: false });
-const db = drizzle(client);
-
-async function check() {
+async function main() {
   try {
-    const result = await client`SELECT 1`;
-    console.log("SUCCESS:", result);
-  } catch (err) {
-    console.error("ERROR:", err);
-  } finally {
-    await client.end();
+    const res = await db.execute(sql`SELECT count(*) FROM architecture_reviews`);
+    console.log("Table exists, count:", res);
+  } catch (err: any) {
+    console.error("Error executing query:", err);
   }
+
+  try {
+    console.log("Attempting insert...");
+    await db.insert(architectureReviews).values([{
+      status: 'success',
+      extractedDomains: sql`${JSON.stringify(['internal_tool'])}::jsonb` as any,
+      architectureStyle: 'BaaS',
+      topRisks: sql`${JSON.stringify(['Shadow IT'])}::jsonb` as any,
+      blindSpots: sql`${JSON.stringify([])}::jsonb` as any,
+      generationTimeMs: 1234,
+    }]);
+    console.log("Insert successful!");
+  } catch (err: any) {
+    console.error("Error inserting:", err);
+  }
+  
+  process.exit(0);
 }
 
-check();
+main();
