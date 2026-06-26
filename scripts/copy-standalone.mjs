@@ -1,18 +1,27 @@
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 
-async function copyDir(src, dest) {
-  try {
-    await fs.cp(src, dest, { recursive: true });
-    console.log(`Copied ${src} to ${dest}`);
-  } catch (err) {
-    if (err.code !== 'ENOENT') console.error(`Error copying ${src}:`, err);
+function copyRecursiveSync(src, dest) {
+  const exists = fs.existsSync(src);
+  const stats = exists && fs.statSync(src);
+  const isDirectory = exists && stats.isDirectory();
+  if (isDirectory) {
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    fs.readdirSync(src).forEach(function(childItemName) {
+      copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
+    });
+  } else if (exists) {
+    fs.copyFileSync(src, dest);
   }
 }
 
-async function main() {
-  await copyDir('public', '.next/standalone/public');
-  await copyDir('.next/static', '.next/standalone/.next/static');
+try {
+  console.log('Copying public to standalone...');
+  copyRecursiveSync('public', '.next/standalone/public');
+  console.log('Copying static to standalone...');
+  copyRecursiveSync('.next/static', '.next/standalone/.next/static');
+  console.log('Copy complete!');
+} catch (err) {
+  console.error('FATAL ERROR DURING COPY:', err);
+  process.exit(1);
 }
-
-main();
