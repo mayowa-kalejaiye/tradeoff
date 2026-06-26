@@ -96,6 +96,11 @@ export interface ConfidenceBreakdown {
   weakSignals: string[];
 }
 
+export interface FailureMode {
+  component: string;
+  impact: string;
+}
+
 export interface BusinessRisk {
   risk: string;
   level: 'Critical' | 'High' | 'Medium';
@@ -133,6 +138,7 @@ export interface ArchitectureOutput {
   blueprint: BlueprintCategory[];
   operatingCostDrivers: string[];
   nonNegotiables?: string[];
+  failureModes?: FailureMode[];
 }
 
 export type EngineResponse = 

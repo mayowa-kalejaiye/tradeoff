@@ -69,7 +69,8 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
     'Git webhook reliability and secure secret injection',
     'Zero-downtime rolling deployments',
     'Dynamic reverse proxying (Envoy/Traefik) for custom domains',
-    'Tenant-aware horizontal autoscaling'
+    'Tenant-aware horizontal autoscaling',
+    'Mitigate DDoS attacks against customer domains'
   ];
 
   const coreValidationQuestions: string[] = [
@@ -82,8 +83,7 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
   const criticalUnknowns: string[] = [
     'How do we safely inject customer secrets at runtime without exposing them to our own logs?',
     'How are preview deployments garbage collected?',
-    'How are idle deployments suspended (scale-to-zero) to save cost?',
-    'How do we mitigate DDoS attacks against customer domains?'
+    'How are idle deployments suspended (scale-to-zero) to save cost?'
   ];
 
   const strategicAdvantages: string[] = [
@@ -155,6 +155,15 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
     'Metrics & Alerting'
   ];
 
+  const failureModes: any[] = [
+    { component: 'Kubernetes API', impact: 'New deployments fail but existing applications remain online.' },
+    { component: 'Build runner', impact: 'Deployment retries automatically from the queue.' },
+    { component: 'Artifact registry', impact: 'New deployments blocked. Existing workloads unaffected.' },
+    { component: 'Redis', impact: 'Build queue pauses. No customer downtime.' },
+    { component: 'PostgreSQL', impact: 'Control plane unavailable. Running customer workloads continue serving traffic.' },
+    { component: 'Reverse proxy', impact: 'Global customer outage. Highest-priority SLO.' }
+  ];
+
   return {
     status: 'success',
     data: {
@@ -195,7 +204,8 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
       challenges: [],
       blueprint,
       operatingCostDrivers,
-      nonNegotiables
+      nonNegotiables,
+      failureModes
     }
   };
 }

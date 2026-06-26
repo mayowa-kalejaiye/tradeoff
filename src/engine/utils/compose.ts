@@ -41,6 +41,11 @@ export function mergeArchitectureOutputs(outputs: ArchitectureOutput[]): Archite
       if (!merged.nonNegotiables) merged.nonNegotiables = [];
       merged.nonNegotiables.push(...output.nonNegotiables);
     }
+    
+    if (output.failureModes) {
+      if (!merged.failureModes) merged.failureModes = [];
+      merged.failureModes.push(...output.failureModes);
+    }
 
     merged.confidenceBreakdown.strongSignals.push(...output.confidenceBreakdown.strongSignals);
     merged.confidenceBreakdown.weakSignals.push(...output.confidenceBreakdown.weakSignals);

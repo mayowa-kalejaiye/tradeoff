@@ -160,6 +160,14 @@ export default function Home() {
       data.operatingCostDrivers.forEach((c: string) => md.push(`- ${c}`));
     }
 
+    if (data.failureModes?.length) {
+      md.push(`\n### Failure Modes`);
+      data.failureModes.forEach((f: any) => {
+        md.push(`• **${f.component}**`);
+        md.push(`→ ${f.impact}\n`);
+      });
+    }
+
     const blob = new Blob([md.join('\n')], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -687,6 +695,25 @@ export default function Home() {
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                      )}
+
+                      {/* Failure Modes */}
+                      {result.data.failureModes && result.data.failureModes.length > 0 && (
+                        <div className="pt-6 border-t border-zinc-200">
+                          <h4 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-500" /> Failure Modes
+                          </h4>
+                          <div className="space-y-4">
+                            {result.data.failureModes.map((fm, i) => (
+                              <div key={i} className="bg-amber-50/50 border border-amber-100 rounded-md p-4">
+                                <div className="font-semibold text-zinc-900 text-sm mb-1">{fm.component}</div>
+                                <div className="text-sm text-zinc-700 leading-relaxed flex gap-2">
+                                  <span className="text-amber-500 shrink-0">→</span>
+                                  <span>{fm.impact}</span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
