@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, ArchitectureDebt, ArchitectureChallenge, BusinessRisk } from '../types';
 
 export function handleCodingAssistant(input: ArchitectureInput): EngineResponse | null {
-  const isCodingAssistant = input.archetypes.includes('ai_coding_assistant') || 
+  const isCodingAssistant = input.archetypes.some(a => a.name === 'ai_coding_assistant') || 
     input.projectIdea.toLowerCase().match(/(cursor|copilot|coding assistant|ide|code generation|developer tool)/);
 
   if (!isCodingAssistant) {

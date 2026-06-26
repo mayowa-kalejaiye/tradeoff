@@ -25,6 +25,11 @@ export type ProjectArchetype =
   | 'ci_cd'
   | 'other';
 
+export interface ArchetypeScore {
+  name: ProjectArchetype;
+  relevance: number;
+}
+
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';
 export type TechnicalExperience = 'vibe_coder' | 'developer' | 'senior_engineer';
 export type UserMetric = 'registered' | 'mau' | 'concurrent' | 'unknown';
@@ -34,7 +39,7 @@ export type ComplianceLevel = 'pci_dss' | 'hipaa' | 'soc2' | 'unknown';
 export interface ArchitectureInput {
   isValidRequest: boolean;
   projectIdea: string;
-  archetypes: ProjectArchetype[];
+  archetypes: ArchetypeScore[];
   teamSize: number;
   expectedUsers: number;
   userMetric?: UserMetric;
@@ -139,9 +144,10 @@ export interface ArchitectureOutput {
   operatingCostDrivers: string[];
   nonNegotiables?: string[];
   failureModes?: FailureMode[];
+  domainBlindSpots?: string[];
 }
 
 export type EngineResponse = 
-  | { status: 'success'; data: ArchitectureOutput }
+  | { status: 'success'; data: ArchitectureOutput; inputArchetypes?: ArchetypeScore[] }
   | { status: 'uncertainty'; reason: string; questions: string[] }
   | { status: 'error'; message: string };

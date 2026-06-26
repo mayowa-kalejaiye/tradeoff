@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, ArchitectureDebt, ArchitectureChallenge, BusinessRisk, BlueprintCategory } from '../types';
 
 export function handleIoT(input: ArchitectureInput): EngineResponse | null {
-  const isIoT = input.archetypes.includes('iot_platform') || 
+  const isIoT = input.archetypes.some(a => a.name === 'iot_platform') || 
     input.projectIdea.toLowerCase().match(/(iot|hardware|sensor|telemetry|fleet tracking|mqtt|device management|edge compute|raspberry pi|arduino)/);
 
   if (!isIoT) {
@@ -202,7 +202,10 @@ export function handleIoT(input: ArchitectureInput): EngineResponse | null {
       architectureDebt,
       challenges,
       blueprint,
-      operatingCostDrivers
+      operatingCostDrivers,
+      domainBlindSpots: [
+        'Hardware is easy. Supporting 500 firmware versions over five years is hard.'
+      ]
     }
   };
 }

@@ -6,7 +6,7 @@ export function enhanceAI(input: ArchitectureInput, output: ArchitectureOutput):
   }
 
   // If this is a healthcare app, inject HIPAA specific LLM risks
-  const isHealthcare = input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa';
+  const isHealthcare = input.archetypes.some(a => a.name === 'healthcare') || input.complianceLevel === 'hipaa';
 
   if (isHealthcare) {
     output.domainConstraints.push(

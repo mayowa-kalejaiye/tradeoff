@@ -20,120 +20,74 @@ import { handleMessaging } from './domains/messaging';
 import { handleRideHailing } from './domains/ride_hailing';
 import { handleCICD } from './domains/ci_cd';
 import { handleDefault } from './domains/default';
+import { handleMarketplace } from './domains/marketplace';
 import { runEnhancers } from './enhancers';
+import { extractOutputsOrPushback, mergeArchitectureOutputs } from './utils/compose';
+
+const domainHandlers: Partial<Record<string, (input: ArchitectureInput) => EngineResponse | null>> = {
+  internal_tool: handleInternal,
+  fintech: handleFintech,
+  realtime_collaboration: handleRealtime,
+  social_network: handleSocial,
+  healthcare: handleHealthcare,
+  ai_coding_assistant: handleCodingAssistant,
+  web3_dapp: handleWeb3,
+  iot_platform: handleIoT,
+  paas: handlePaaS,
+  search_engine: handleSearchEngine,
+  recommendation_engine: handleRecommendation,
+  ad_tech: handleAdTech,
+  video_streaming: handleStreaming,
+  cybersecurity: handleCybersecurity,
+  ai_infrastructure: handleAIInfra,
+  gis_mapping: handleGIS,
+  messaging: handleMessaging,
+  ride_hailing: handleRideHailing,
+  ci_cd: handleCICD,
+  marketplace: handleMarketplace
+};
 
 function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
-  // 1. Check for Absolute Vetoes (Internal Tools)
-  if (input.archetypes.includes('internal_tool')) {
+  // Check for Absolute Vetoes first (e.g., Internal Tools might just need a basic CRUD return)
+  if (input.archetypes.some(a => a.name === 'internal_tool')) {
     const response = handleInternal(input);
     if (response) return response;
   }
 
+  // Sort archetypes by relevance descending, take top 3
+  const topArchetypes = [...input.archetypes]
+    .sort((a, b) => b.relevance - a.relevance)
+    .slice(0, 3);
 
-  // Route to Fintech Expert Layer
-  if (input.archetypes.includes('fintech')) {
-    const response = handleFintech(input);
-    if (response) return response;
+  const responses: (EngineResponse | null)[] = [];
+
+  for (const arch of topArchetypes) {
+    const handler = domainHandlers[arch.name];
+    if (handler) {
+      const res = handler(input);
+      if (res) responses.push(res);
+    }
   }
 
-  // Route to Realtime Expert Layer
-  if (input.archetypes.includes('realtime_collaboration')) {
-    const response = handleRealtime(input);
-    if (response) return response;
+  // Fallback if no specific domain handlers matched
+  if (responses.length === 0) {
+    const aiResponse = handleAIAndAutomation(input);
+    if (aiResponse) {
+      responses.push(aiResponse);
+    } else {
+      responses.push(handleDefault(input));
+    }
   }
 
-  // Route to Social Expert Layer
-  if (input.archetypes.includes('social_network')) {
-    const response = handleSocial(input);
-    if (response) return response;
+  const { pushback, outputs } = extractOutputsOrPushback(responses);
+  if (pushback) return pushback; // If any domain pushed back with a question, return immediately
+
+  if (outputs.length === 0) {
+     return handleDefault(input);
   }
 
-  // Route to Healthcare Expert Layer
-  if (input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa') {
-    const response = handleHealthcare(input);
-    if (response) return response;
-  }
-
-  // Route to AI Coding Assistant Expert Layer
-  if (input.archetypes.includes('ai_coding_assistant')) {
-    const response = handleCodingAssistant(input);
-    if (response) return response;
-  }
-
-  // Route to Web3/Crypto Expert Layer
-  if (input.archetypes.includes('web3_dapp')) {
-    const response = handleWeb3(input);
-    if (response) return response;
-  }
-
-  // Route to IoT/Hardware Expert Layer
-  if (input.archetypes.includes('iot_platform')) {
-    const response = handleIoT(input);
-    if (response) return response;
-  }
-
-  // Route to Developer Platform / PaaS Expert Layer
-  if (input.archetypes.includes('paas')) {
-    const response = handlePaaS(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('search_engine')) {
-    const response = handleSearchEngine(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('recommendation_engine')) {
-    const response = handleRecommendation(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('ad_tech')) {
-    const response = handleAdTech(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('video_streaming')) {
-    const response = handleStreaming(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('cybersecurity')) {
-    const response = handleCybersecurity(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('ai_infrastructure')) {
-    const response = handleAIInfra(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('gis_mapping')) {
-    const response = handleGIS(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('messaging')) {
-    const response = handleMessaging(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('ride_hailing')) {
-    const response = handleRideHailing(input);
-    if (response) return response;
-  }
-
-  if (input.archetypes.includes('ci_cd')) {
-    const response = handleCICD(input);
-    if (response) return response;
-  }
-
-  // Route to AI & Automation Expert Layer (Fallback for non-vertical AI)
-  const aiResponse = handleAIAndAutomation(input);
-  if (aiResponse) return aiResponse;
-
-  // Fallback to Standard Expert Layer
-  return handleDefault(input);
+  const mergedOutput = mergeArchitectureOutputs(outputs);
+  return { status: 'success', data: mergedOutput, inputArchetypes: input.archetypes };
 }
 
 export function recommendArchitecture(input: ArchitectureInput): EngineResponse {

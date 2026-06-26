@@ -124,6 +124,9 @@ export function handleFintech(input: ArchitectureInput): EngineResponse | null {
           'Background worker compute for outbox polling',
           'Third-party KYC/AML API usage',
           'Compliance monitoring tools (e.g. Vanta, Drata)'
+        ],
+        domainBlindSpots: [
+          'Payment processing is not the difficult part. Reconciliation is.'
         ]
       }
     };
@@ -219,6 +222,9 @@ export function handleFintech(input: ArchitectureInput): EngineResponse | null {
           'Temporal cluster compute and persistent state storage',
           'Enterprise multi-region database replication',
           'Dedicated SRE / DevSecOps headcount (often the largest cost)'
+        ],
+        domainBlindSpots: [
+          'Payment processing is not the difficult part. Reconciliation is.'
         ]
       }
     };

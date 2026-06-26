@@ -80,11 +80,43 @@ export default function Home() {
     const md: string[] = [];
     md.push(`# Architecture Review Memo`);
     md.push(`\n**Project Brief:**\n> ${prompt.split('\n').join('\n> ')}\n`);
-    md.push(`## Recommended Architecture: ${data.architectureStyle}`);
+    md.push(`\n## Layer 1: Core Architecture`);
+    md.push(`### Recommended Architecture: ${data.architectureStyle}`);
     
     if (data.recommended[0]?.reasons) {
       md.push(`\n### Primary Reasoning`);
       data.recommended[0].reasons.forEach((r: string) => md.push(`- ${r}`));
+    }
+
+    if (data.stack?.length) {
+      md.push(`\n### Implementation Overview`);
+      md.push(`**Core Stack:**`);
+      data.stack.forEach((s: any) => md.push(`- ${s.name} (${s.category})`));
+    }
+
+    if (data.deployment?.length) {
+      md.push(`\n**Target Deployment:**`);
+      data.deployment.forEach((d: string) => md.push(`- ${d}`));
+    }
+
+    if (data.operatingCostDrivers?.length) {
+      md.push(`\n**Estimated Operating Cost Drivers:**`);
+      data.operatingCostDrivers.forEach((c: string) => md.push(`- ${c}`));
+    }
+
+    if (data.failureModes?.length) {
+      md.push(`\n### Failure Modes`);
+      data.failureModes.forEach((f: any) => {
+        md.push(`• **${f.component}**`);
+        md.push(`→ ${f.impact}\n`);
+      });
+    }
+
+    md.push(`\n## Layer 2: Domain-Specific Intelligence`);
+
+    if (data.domainBlindSpots?.length) {
+      md.push(`\n### Domain Blind Spots`);
+      data.domainBlindSpots.forEach((b: string) => md.push(`- ${b}`));
     }
     
     if (data.businessRisks?.length) {
@@ -115,6 +147,8 @@ export default function Home() {
       data.strategicAdvantages.forEach((a: string) => md.push(`- ${a}`));
     }
 
+    md.push(`\n## Layer 3: Architectural Nuance`);
+
     if (data.deferredDecisions?.length) {
       md.push(`\n### Intentionally Deferred`);
       data.deferredDecisions.forEach((d: any) => {
@@ -142,30 +176,6 @@ export default function Home() {
     if (data.nonNegotiables?.length) {
       md.push(`\n### Non-Negotiable Infrastructure`);
       data.nonNegotiables.forEach((c: string) => md.push(`- ${c}`));
-    }
-
-    if (data.stack?.length) {
-      md.push(`\n### Implementation Overview`);
-      md.push(`**Core Stack:**`);
-      data.stack.forEach((s: any) => md.push(`- ${s.name} (${s.category})`));
-    }
-
-    if (data.deployment?.length) {
-      md.push(`\n**Target Deployment:**`);
-      data.deployment.forEach((d: string) => md.push(`- ${d}`));
-    }
-
-    if (data.operatingCostDrivers?.length) {
-      md.push(`\n**Estimated Operating Cost Drivers:**`);
-      data.operatingCostDrivers.forEach((c: string) => md.push(`- ${c}`));
-    }
-
-    if (data.failureModes?.length) {
-      md.push(`\n### Failure Modes`);
-      data.failureModes.forEach((f: any) => {
-        md.push(`• **${f.component}**`);
-        md.push(`→ ${f.impact}\n`);
-      });
     }
 
     const blob = new Blob([md.join('\n')], { type: 'text/markdown' });
@@ -435,10 +445,26 @@ export default function Home() {
                     </button>
                   </div>
                   
-                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 mb-6 flex items-center gap-3">
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 mb-4 flex items-center gap-3">
                     <Layers className="text-indigo-500 shrink-0" />
                     {result.data.architectureStyle}
                   </h2>
+
+                  {result.inputArchetypes && result.inputArchetypes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {result.inputArchetypes
+                        .slice()
+                        .sort((a, b) => b.relevance - a.relevance)
+                        .map((arch, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-full shadow-sm">
+                          <span className="text-xs font-bold text-zinc-700 capitalize">{arch.name.replace(/_/g, ' ')}</span>
+                          <span className="text-amber-400 font-mono text-[10px] tracking-widest">
+                            {'★'.repeat(arch.relevance)}{'☆'.repeat(5 - arch.relevance)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   
                   <div className="pl-4 border-l-2 border-zinc-200">
                     <p className="text-sm font-bold text-zinc-900 mb-2">Primary Reasoning:</p>
@@ -451,6 +477,32 @@ export default function Home() {
                     </ul>
                   </div>
                 </div>
+
+                {/* --- LAYER 2: Domain-Specific Intelligence --- */}
+                <div className="pt-6">
+                  <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2">
+                    <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
+                    Domain-Specific Intelligence
+                  </h2>
+
+                  {/* Domain Blind Spots (NEW) */}
+                  {result.data.domainBlindSpots && result.data.domainBlindSpots.length > 0 && (
+                    <div className="space-y-4 mb-8">
+                      <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" /> Domain Blind Spots
+                      </h3>
+                      <div className="bg-indigo-50 border border-indigo-200 border-l-4 border-l-indigo-600 rounded-md p-5 shadow-sm">
+                        <ul className="space-y-3">
+                          {result.data.domainBlindSpots.map((spot, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 shrink-0"></div>
+                              <span className="text-sm font-medium text-indigo-900 leading-relaxed">{spot}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Business Risks (Elevated to top) */}
                 {result.data.businessRisks && result.data.businessRisks.length > 0 && (
@@ -549,9 +601,17 @@ export default function Home() {
                     </ul>
                   </div>
                 )}
+                </div>
+
+                {/* --- LAYER 3: Architectural Nuance --- */}
+                <div className="pt-8">
+                  <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2">
+                    <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span>
+                    Architectural Nuance & Tradeoffs
+                  </h2>
 
                 {/* Vetoes and Debt (Linear-style left-border cards) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-zinc-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
                   {/* Deferred Decisions */}
                   <div>
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -633,9 +693,17 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+                </div>
+
+                {/* --- LAYER 1: Core Architecture (Implementation Details) --- */}
+                <div className="pt-8">
+                  <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2">
+                    <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+                    Core Architecture Details
+                  </h2>
 
                 {/* Stack & Deployment Overview */}
-                <div className="pt-6 border-t border-zinc-100">
+                <div className="pt-6">
                   <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-6 flex items-center gap-2">
                     <Server className="w-4 h-4 text-zinc-400" /> Implementation Overview
                   </h3>
@@ -718,8 +786,9 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-                    </div>
                   </div>
+                </div>
+                </div>
                 </div>
 
               </motion.div>

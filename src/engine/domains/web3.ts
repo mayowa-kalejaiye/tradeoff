@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, ArchitectureDebt, ArchitectureChallenge, BusinessRisk, BlueprintCategory } from '../types';
 
 export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
-  const isWeb3 = input.archetypes.includes('web3_dapp') || 
+  const isWeb3 = input.archetypes.some(a => a.name === 'web3_dapp') || 
     input.projectIdea.toLowerCase().match(/(crypto|blockchain|ethereum|solana|smart contract|nft|token|defi|dao|wallet|dapp)/);
 
   if (!isWeb3) {
@@ -204,7 +204,10 @@ export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
       architectureDebt,
       challenges,
       blueprint,
-      operatingCostDrivers
+      operatingCostDrivers,
+      domainBlindSpots: [
+        'Gas optimization and key management often kill user adoption before smart contract exploits do.'
+      ]
     }
   };
 }

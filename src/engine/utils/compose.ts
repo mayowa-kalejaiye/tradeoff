@@ -47,6 +47,11 @@ export function mergeArchitectureOutputs(outputs: ArchitectureOutput[]): Archite
       merged.failureModes.push(...output.failureModes);
     }
 
+    if (output.domainBlindSpots) {
+      if (!merged.domainBlindSpots) merged.domainBlindSpots = [];
+      merged.domainBlindSpots.push(...output.domainBlindSpots);
+    }
+
     merged.confidenceBreakdown.strongSignals.push(...output.confidenceBreakdown.strongSignals);
     merged.confidenceBreakdown.weakSignals.push(...output.confidenceBreakdown.weakSignals);
 
@@ -92,6 +97,11 @@ export function mergeArchitectureOutputs(outputs: ArchitectureOutput[]): Archite
   // Deduplicate nonNegotiables just in case
   if (merged.nonNegotiables) {
     merged.nonNegotiables = Array.from(new Set(merged.nonNegotiables));
+  }
+
+  // Deduplicate domainBlindSpots
+  if (merged.domainBlindSpots) {
+    merged.domainBlindSpots = Array.from(new Set(merged.domainBlindSpots));
   }
 
   return merged;

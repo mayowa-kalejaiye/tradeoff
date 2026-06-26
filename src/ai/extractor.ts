@@ -6,10 +6,13 @@ import { ArchitectureInput } from '../engine/types';
 const extractionSchema = z.object({
   isValidRequest: z.boolean().describe('True if the user is actually describing a software application/project to build. False if they are asking general questions like "what is your name", making small talk, or typing spam/gibberish.'),
   projectIdea: z.string().describe('A concise summary of what the user is trying to build. Leave empty if isValidRequest is false.'),
-  archetypes: z.array(z.enum([
-    'ecommerce', 'marketplace', 'saas', 'fintech', 'social_network', 
-    'content_platform', 'realtime_collaboration', 'ai_saas', 'ai_coding_assistant', 'internal_tool', 'healthcare', 'web3_dapp', 'iot_platform', 'paas', 'search_engine', 'recommendation_engine', 'ad_tech', 'video_streaming', 'cybersecurity', 'ai_infrastructure', 'gis_mapping', 'ride_hailing', 'messaging', 'ci_cd', 'other'
-  ])).describe('The primary categories that best describe this project.'),
+  archetypes: z.array(z.object({
+    name: z.enum([
+      'ecommerce', 'marketplace', 'saas', 'fintech', 'social_network', 
+      'content_platform', 'realtime_collaboration', 'ai_saas', 'ai_coding_assistant', 'internal_tool', 'healthcare', 'web3_dapp', 'iot_platform', 'paas', 'search_engine', 'recommendation_engine', 'ad_tech', 'video_streaming', 'cybersecurity', 'ai_infrastructure', 'gis_mapping', 'ride_hailing', 'messaging', 'ci_cd', 'other'
+    ]),
+    relevance: z.number().min(1).max(5).describe('Score from 1 to 5 indicating how central this archetype is to the project.')
+  })).describe('The primary categories that best describe this project. A project can have multiple archetypes (e.g., a real estate app is both a marketplace and gis_mapping).'),
   teamSize: z.number().describe('The number of developers working on the project. Default to 1 if unknown or solo.'),
   expectedUsers: z.number().describe('The realistic expected number of users/MAU. Default to 1000 if not specified.'),
   userMetric: z.enum(['registered', 'mau', 'concurrent', 'unknown']).optional().describe('What kind of users are they describing? If they do not explicitly say "concurrent" or "MAU", return "unknown" so the engine can ask.'),
@@ -29,7 +32,10 @@ export async function extractArchitectureInput(prompt: string): Promise<Architec
       
       Read carefully between the lines. If they say "I don't know how to code but I'm building this with Claude", their technicalExperience is "vibe_coder".
       If they say "we are a team of 3 trying to launch an MVP this week", their priority is "speed".
-      If they say "we're building Stripe", their archetype is "fintech" and priority is likely "reliability".
+
+      CRITICAL: A project can fall into multiple archetypes. Assign a relevance score (1-5) to each applicable archetype.
+      For example, a real estate app with maps should have 'marketplace' (5) and 'gis_mapping' (3).
+      Do not just pick one. Provide all relevant archetypes.
 
       CRITICAL: If they mention a user count (e.g. 300,000) but do NOT explicitly say if it is concurrent, MAU, or registered, you MUST set userMetric to "unknown". Do not guess.
 

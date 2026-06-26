@@ -2,10 +2,10 @@ import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, Ar
 
 export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse | null {
   const isAutomation = input.projectIdea.toLowerCase().match(/\b(scrape|scraping|puppeteer|playwright|automation|crawler|bot)\b/);
-  const isAI = input.archetypes.includes('ai_saas') || input.projectIdea.toLowerCase().match(/\b(ai|llm|openai|anthropic|chatgpt)\b/);
+  const isAI = input.archetypes.some(a => a.name === 'ai_saas') || input.projectIdea.toLowerCase().match(/\b(ai|llm|openai|anthropic|chatgpt)\b/);
 
   // We only handle this if it's explicitly automation/scraping OR AI SaaS.
-  if (!isAutomation && !input.archetypes.includes('ai_saas')) {
+  if (!isAutomation && !input.archetypes.some(a => a.name === 'ai_saas')) {
     return null;
   }
 
@@ -231,7 +231,10 @@ export function handleAIAndAutomation(input: ArchitectureInput): EngineResponse 
       architectureDebt,
       challenges,
       blueprint,
-      operatingCostDrivers
+      operatingCostDrivers,
+      domainBlindSpots: [
+        'Model commoditization and context window bloat are your real cost drivers.'
+      ]
     }
   };
 }

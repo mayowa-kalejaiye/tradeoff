@@ -72,6 +72,9 @@ export function handleRideHailing(input: ArchitectureInput): EngineResponse | nu
     reason: 'True surge pricing requires forecasting demand. Start with simple multipliers based on active concurrent requests.'
   });
 
+  if (!merged.domainBlindSpots) merged.domainBlindSpots = [];
+  merged.domainBlindSpots.push('Driver liquidity is everything; technology is secondary.');
+
   return {
     status: 'success',
     data: merged

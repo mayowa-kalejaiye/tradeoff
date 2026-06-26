@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, BusinessRisk } from '../types';
 
 export function handleHealthcare(input: ArchitectureInput): EngineResponse | null {
-  const isHealthcare = input.archetypes.includes('healthcare') || input.complianceLevel === 'hipaa';
+  const isHealthcare = input.archetypes.some(a => a.name === 'healthcare') || input.complianceLevel === 'hipaa';
   if (!isHealthcare) return null;
 
   const promptText = input.projectIdea.toLowerCase();
@@ -132,6 +132,9 @@ export function handleHealthcare(input: ArchitectureInput): EngineResponse | nul
           'Compliance PaaS licensing (Vanta/Aptible) - scales by employee headcount or container count',
           'Managed database premiums for BAA-signed tiers (RDS, etc.)',
           'Enterprise SSO providers (Okta/Auth0) for staff access'
+        ],
+        domainBlindSpots: [
+          'Compliance is not your moat. Patient outcomes are.'
         ]
       }
     };
@@ -237,6 +240,9 @@ export function handleHealthcare(input: ArchitectureInput): EngineResponse | nul
           'Extensive S3 storage for medical imaging or backups',
           'High data egress costs for large file transfers',
           'DevSecOps headcount (massive shift from software OPEX to payroll)'
+        ],
+        domainBlindSpots: [
+          'Compliance is not your moat. Patient outcomes are.'
         ]
       }
     };
@@ -255,7 +261,10 @@ export function handleHealthcare(input: ArchitectureInput): EngineResponse | nul
       ],
       deployment: ['HIPAA Compliant PaaS (Aptible/Medplum)'], recommended: [], deferredDecisions: [],
       architectureDebt: [], challenges: [], businessRisks: [], domainConstraints: ['Strict BAA required'],
-      coreValidationQuestions: [], criticalUnknowns: [], strategicAdvantages: [], blueprint: [], operatingCostDrivers: []
+      coreValidationQuestions: [], criticalUnknowns: [], strategicAdvantages: [], blueprint: [], operatingCostDrivers: [],
+      domainBlindSpots: [
+        'Compliance is not your moat. Patient outcomes are.'
+      ]
     }
   };
 }
