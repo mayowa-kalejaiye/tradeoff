@@ -35,6 +35,21 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     const output = recommendArchitecture(extractedInput);
 
     if (output.status === 'success') {
+      // Ensure the table exists in production without needing a CLI migration
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS "architecture_reviews" (
+          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          "extracted_domains" jsonb,
+          "architecture_style" varchar(255),
+          "top_risks" jsonb,
+          "blind_spots" jsonb,
+          "generation_time_ms" integer,
+          "status" varchar(50),
+          "error_message" varchar,
+          "created_at" timestamp NOT NULL DEFAULT now()
+        );
+      `).catch(e => console.error("Table creation failed:", e));
+
       // 3. Log the successful review to the database
       // Note: We deliberately exclude the prompt for privacy
       await db.insert(architectureReviews).values([{
@@ -51,13 +66,9 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
   } catch (error: any) {
     console.error('Error processing architecture request:', error);
     
-    // Extract the real underlying database error cause if it's a Drizzle error
-    let errorMessage = error instanceof Error ? error.message : String(error);
-    if (error.cause && error.cause.message) {
-      errorMessage = `${errorMessage} (Cause: ${error.cause.message})`;
-    } else if (error.code) {
-      errorMessage = `${errorMessage} (Code: ${error.code})`;
-    }
+    // Dump the full error object for debugging
+    const fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+    let errorMessage = `DB ERROR TRACE: ${fullError}`;
 
     const generationTimeMs = Date.now() - startTime;
     
