@@ -28,15 +28,18 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
   }
 
   const stack: StackComponent[] = [
-    { name: 'Kubernetes', category: 'other' },
-    { name: 'Docker / containerd', category: 'other' },
-    { name: 'BuildKit', category: 'other' },
-    { name: 'PostgreSQL', category: 'database' },
-    { name: 'Redis', category: 'cache' },
-    { name: 'MinIO / S3', category: 'database' },
-    { name: 'NATS / Kafka', category: 'queue' },
-    { name: 'Next.js (Control Plane UI)', category: 'frontend' },
-    { name: 'Go / Rust (Data Plane / Proxies)', category: 'backend' }
+    { name: 'Kubernetes (EKS/GKE)', category: 'other' },
+    { name: 'BuildKit (OCI Image Builder)', category: 'other' },
+    { name: 'Traefik / Envoy (Ingress & Dynamic Routing)', category: 'other' },
+    { name: 'cert-manager (Automatic TLS)', category: 'other' },
+    { name: 'ExternalDNS (DNS Automation)', category: 'other' },
+    { name: 'Harbor / ECR (Container Registry)', category: 'database' },
+    { name: 'ArgoCD / Flux (Deployment Controller)', category: 'other' },
+    { name: 'Prometheus + Grafana + Loki (Observability)', category: 'other' },
+    { name: 'Redis (Build cache metadata / Queue state)', category: 'cache' },
+    { name: 'PostgreSQL (Control Plane State)', category: 'database' },
+    { name: 'NATS / Kafka (Log Streaming)', category: 'queue' },
+    { name: 'Go / Rust (Control Plane)', category: 'backend' }
   ];
 
   const businessRisks: BusinessRisk[] = [
@@ -143,6 +146,15 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
     'Storage for container images (Artifact Registry) and build logs'
   ];
 
+  const nonNegotiables: string[] = [
+    'Container Registry (Harbor / ECR)',
+    'Reverse Proxy / Ingress Controller (Traefik / Envoy)',
+    'Secret Management (HashiCorp Vault / Kubernetes Secrets)',
+    'Certificate Automation (cert-manager)',
+    'Centralized Logging (Prometheus / Grafana / Loki)',
+    'Metrics & Alerting'
+  ];
+
   return {
     status: 'success',
     data: {
@@ -182,7 +194,8 @@ export function handlePaaS(input: ArchitectureInput): EngineResponse | null {
       architectureDebt,
       challenges: [],
       blueprint,
-      operatingCostDrivers
+      operatingCostDrivers,
+      nonNegotiables
     }
   };
 }

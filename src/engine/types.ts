@@ -132,6 +132,7 @@ export interface ArchitectureOutput {
   challenges: ArchitectureChallenge[];
   blueprint: BlueprintCategory[];
   operatingCostDrivers: string[];
+  nonNegotiables?: string[];
 }
 
 export type EngineResponse = 

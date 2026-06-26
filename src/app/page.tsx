@@ -139,6 +139,11 @@ export default function Home() {
       md.push(`\n**Risk Analysis (${data.assumptionRisk.level}):** ${data.assumptionRisk.reason}`);
     }
 
+    if (data.nonNegotiables?.length) {
+      md.push(`\n### Non-Negotiable Infrastructure`);
+      data.nonNegotiables.forEach((c: string) => md.push(`- ${c}`));
+    }
+
     if (data.stack?.length) {
       md.push(`\n### Implementation Overview`);
       md.push(`**Core Stack:**`);
@@ -603,6 +608,23 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+
+                {/* Non-Negotiable Components */}
+                {result.data.nonNegotiables && result.data.nonNegotiables.length > 0 && (
+                  <div className="pt-6 border-t border-zinc-100">
+                    <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <Server className="w-4 h-4 text-zinc-500" /> Non-Negotiable Infrastructure
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                      {result.data.nonNegotiables.map((item, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-md shadow-sm">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="text-sm font-medium text-zinc-100 leading-snug">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Stack & Deployment Overview */}
                 <div className="pt-6 border-t border-zinc-100">

@@ -37,6 +37,11 @@ export function mergeArchitectureOutputs(outputs: ArchitectureOutput[]): Archite
     merged.challenges.push(...output.challenges);
     merged.operatingCostDrivers.push(...output.operatingCostDrivers);
     
+    if (output.nonNegotiables) {
+      if (!merged.nonNegotiables) merged.nonNegotiables = [];
+      merged.nonNegotiables.push(...output.nonNegotiables);
+    }
+
     merged.confidenceBreakdown.strongSignals.push(...output.confidenceBreakdown.strongSignals);
     merged.confidenceBreakdown.weakSignals.push(...output.confidenceBreakdown.weakSignals);
 
@@ -77,6 +82,11 @@ export function mergeArchitectureOutputs(outputs: ArchitectureOutput[]): Archite
     if (output.assumptionRisk.reason) {
       merged.assumptionRisk.reason += ' | ' + output.assumptionRisk.reason;
     }
+  }
+
+  // Deduplicate nonNegotiables just in case
+  if (merged.nonNegotiables) {
+    merged.nonNegotiables = Array.from(new Set(merged.nonNegotiables));
   }
 
   return merged;
