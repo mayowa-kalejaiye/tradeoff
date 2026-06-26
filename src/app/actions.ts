@@ -38,10 +38,10 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
       // Note: We deliberately exclude the prompt for privacy
       await db.insert(architectureReviews).values([{
         status: 'success',
-        extractedDomains: JSON.stringify(extractedInput.archetypes.map(a => a.name)) as any,
+        extractedDomains: extractedInput.archetypes.map(a => a.name),
         architectureStyle: output.data.architectureStyle,
-        topRisks: JSON.stringify(output.data.businessRisks.map(r => r.risk)) as any,
-        blindSpots: JSON.stringify(output.data.domainBlindSpots || []) as any,
+        topRisks: output.data.businessRisks.map(r => r.risk),
+        blindSpots: output.data.domainBlindSpots || [],
         generationTimeMs: Date.now() - startTime,
       }]);
     }
