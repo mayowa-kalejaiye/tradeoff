@@ -66,9 +66,13 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
   } catch (error: any) {
     console.error('Error processing architecture request:', error);
     
-    // Dump the full error object for debugging
-    const fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-    let errorMessage = `DB ERROR TRACE: ${fullError}`;
+    // Extract the real underlying database error cause if it's a Drizzle error
+    let errorMessage = error instanceof Error ? error.message : String(error);
+    if (error.cause && error.cause.message) {
+      errorMessage = `${errorMessage} (Cause: ${error.cause.message})`;
+    } else if (error.code) {
+      errorMessage = `${errorMessage} (Code: ${error.code})`;
+    }
 
     const generationTimeMs = Date.now() - startTime;
     
