@@ -15,7 +15,9 @@ export async function getDashboardMetrics() {
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "unknown_technologies" jsonb;
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "missing_niches" jsonb;
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "confidence_score" integer;
-    `).catch(e => console.error("Alter table failed:", e));
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_input" jsonb;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_output" jsonb;
+    `).catch(e => console.error("Alter table failed in dashboard:", e));
 
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "engine_updates" (

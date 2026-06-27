@@ -39,6 +39,8 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "unknown_technologies" jsonb;
     ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "missing_niches" jsonb;
     ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "confidence_score" integer;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_input" jsonb;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_output" jsonb;
   `).catch(e => console.error("Alter table failed:", e));
 
   await db.execute(sql`
@@ -104,8 +106,11 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
           unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
           missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
           confidenceScore: extractedInput.confidenceScore || 0,
+          rawInput: sql`${JSON.stringify(extractedInput)}::jsonb` as any,
+          rawOutput: sql`${JSON.stringify(output.data)}::jsonb` as any,
         }).where(eq(architectureReviews.id, recordId));
       }
+      return { ...output, reviewId: recordId || undefined };
     }
 
     return output;

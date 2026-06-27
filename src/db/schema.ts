@@ -19,6 +19,10 @@ export const architectureReviews = pgTable("architecture_reviews", {
   missingNiches: jsonb("missing_niches").$type<string[]>(),
   confidenceScore: integer("confidence_score"),
   
+  // Public Sharing & Rehydration
+  rawInput: jsonb("raw_input"),
+  rawOutput: jsonb("raw_output"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

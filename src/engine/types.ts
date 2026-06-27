@@ -152,6 +152,6 @@ export interface ArchitectureOutput {
 }
 
 export type EngineResponse = 
-  | { status: 'success'; data: ArchitectureOutput; inputArchetypes?: ArchetypeScore[] }
+  | { status: 'success'; data: ArchitectureOutput; inputArchetypes?: ArchetypeScore[]; reviewId?: string }
   | { status: 'uncertainty'; reason: string; questions: string[] }
   | { status: 'error'; message: string };
