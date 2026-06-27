@@ -6,8 +6,8 @@ import { notFound } from 'next/navigation';
 import { ArchitectureOutput, ArchetypeScore } from '@/engine/types';
 import Link from 'next/link';
 
-export default async function PublicReviewPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function PublicReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   if (!id) {
     notFound();
@@ -22,8 +22,27 @@ export default async function PublicReviewPage({ params }: { params: { id: strin
     notFound();
   }
 
-  if (!review || review.status !== 'success' || !review.rawOutput) {
+  if (!review || review.status !== 'success') {
     notFound();
+  }
+
+  if (!review.rawOutput) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-8">
+        <div className="max-w-md text-center space-y-4">
+          <div className="w-12 h-12 bg-zinc-200 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h1 className="text-xl font-bold text-zinc-900">Review Unavailable</h1>
+          <p className="text-sm text-zinc-600">This architecture review was generated with an older version of the engine and cannot be shared. Please generate a new review to share it.</p>
+          <div className="pt-4">
+            <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-sm font-bold rounded hover:bg-zinc-800 transition-colors">
+              Start New Review
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const data = review.rawOutput as ArchitectureOutput;
