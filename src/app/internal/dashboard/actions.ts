@@ -6,6 +6,25 @@ import { desc, sql, gte } from 'drizzle-orm';
 
 export async function getDashboardMetrics() {
   try {
+    // Ensure tables and columns exist even if the dashboard is visited before a review is run
+    await db.execute(sql`
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "prompt_length" integer;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "input_tokens" integer;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "output_tokens" integer;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "total_cost" real;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "unknown_technologies" jsonb;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "missing_niches" jsonb;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "confidence_score" integer;
+    `).catch(e => console.error("Alter table failed:", e));
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "engine_updates" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "description" varchar(500) NOT NULL,
+        "created_at" timestamp NOT NULL DEFAULT now()
+      );
+    `).catch(e => console.error("Engine updates table creation failed:", e));
+
     // 1. Total Reviews (includes started/success/error)
     const totalReviewsResult = await db.select({ count: sql<number>`count(*)` }).from(architectureReviews);
     const totalStartedReviews = Number(totalReviewsResult[0]?.count || 0);
