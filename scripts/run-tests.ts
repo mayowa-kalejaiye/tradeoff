@@ -34,9 +34,9 @@ for (const archetype of archetypes) {
           
           const input: ArchitectureInput = {
             isValidRequest: true,
-            projectIdea: `Testing ${archetype} at ${priority} priority for ${expectedUsers} users`,
-            archetypes: [{ name: archetype, relevance: 5 }],
-            teamSize: 2,
+            projectIdea: `Testing ${archetype} at ${priority} priority for ${expectedUsers} users.`,
+            archetypes: [{ name: archetype, score: 95 }],
+            teamSize: 5,
             expectedUsers,
             priority,
             complianceLevel: compliance,

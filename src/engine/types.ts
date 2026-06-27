@@ -23,11 +23,12 @@ export type ProjectArchetype =
   | 'ride_hailing'
   | 'messaging'
   | 'ci_cd'
+  | 'biotechnology'
   | 'other';
 
 export interface ArchetypeScore {
   name: ProjectArchetype;
-  relevance: number;
+  score: number;
 }
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';

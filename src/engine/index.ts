@@ -21,6 +21,7 @@ import { handleRideHailing } from './domains/ride_hailing';
 import { handleCICD } from './domains/ci_cd';
 import { handleDefault } from './domains/default';
 import { handleMarketplace } from './domains/marketplace';
+import { handleBiotech } from './domains/biotech';
 import { runEnhancers } from './enhancers';
 import { extractOutputsOrPushback, mergeArchitectureOutputs } from './utils/compose';
 
@@ -44,7 +45,8 @@ const domainHandlers: Partial<Record<string, (input: ArchitectureInput) => Engin
   messaging: handleMessaging,
   ride_hailing: handleRideHailing,
   ci_cd: handleCICD,
-  marketplace: handleMarketplace
+  marketplace: handleMarketplace,
+  biotechnology: handleBiotech
 };
 
 function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
@@ -54,9 +56,9 @@ function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
     if (response) return response;
   }
 
-  // Sort archetypes by relevance descending, take top 3
+  // Sort archetypes by score descending, take top 3
   const topArchetypes = [...input.archetypes]
-    .sort((a, b) => b.relevance - a.relevance)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
   const responses: (EngineResponse | null)[] = [];

@@ -454,13 +454,11 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2 mb-6">
                       {result.inputArchetypes
                         .slice()
-                        .sort((a, b) => b.relevance - a.relevance)
+                        .sort((a, b) => b.score - a.score)
                         .map((arch, i) => (
                         <div key={i} className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-full shadow-sm">
                           <span className="text-xs font-bold text-zinc-700 capitalize">{arch.name.replace(/_/g, ' ')}</span>
-                          <span className="text-amber-400 font-mono text-[10px] tracking-widest">
-                            {'★'.repeat(arch.relevance)}{'☆'.repeat(5 - arch.relevance)}
-                          </span>
+                          <span className="text-amber-400 font-mono text-[10px] tracking-widest">{arch.score}</span>
                         </div>
                       ))}
                     </div>
