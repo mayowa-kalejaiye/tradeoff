@@ -7,6 +7,8 @@ import { db } from '@/db';
 import { architectureReviews } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 
+import { eq } from 'drizzle-orm';
+
 export async function processArchitectureRequest(prompt: string): Promise<EngineResponse> {
   if (!prompt || prompt.trim() === '') {
     throw new Error('Prompt cannot be empty');
@@ -14,16 +16,68 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
 
   const startTime = Date.now();
 
+  // Ensure tables and columns exist in production
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS "architecture_reviews" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "extracted_domains" jsonb,
+      "architecture_style" varchar(255),
+      "top_risks" jsonb,
+      "blind_spots" jsonb,
+      "generation_time_ms" integer,
+      "status" varchar(50),
+      "error_message" varchar,
+      "created_at" timestamp NOT NULL DEFAULT now()
+    );
+  `).catch(e => console.error("Table creation failed:", e));
+
+  await db.execute(sql`
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "prompt_length" integer;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "input_tokens" integer;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "output_tokens" integer;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "total_cost" real;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "unknown_technologies" jsonb;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "missing_niches" jsonb;
+    ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "confidence_score" integer;
+  `).catch(e => console.error("Alter table failed:", e));
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS "engine_updates" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "description" varchar(500) NOT NULL,
+      "created_at" timestamp NOT NULL DEFAULT now()
+    );
+  `).catch(e => console.error("Engine updates table creation failed:", e));
+
+  let recordId: string | null = null;
+
   try {
-    // 1. Extract structured data from the prompt using AI
-    const extractedInput = await extractArchitectureInput(prompt);
+    // 1. Log "started" state
+    const newRecord = await db.insert(architectureReviews).values({
+      status: 'started',
+      promptLength: prompt.length,
+    }).returning({ id: architectureReviews.id });
+    
+    if (newRecord.length > 0) {
+      recordId = newRecord[0].id;
+    }
+
+    // 2. Extract structured data from the prompt using AI
+    const { input: extractedInput, usage } = await extractArchitectureInput(prompt);
+
+    const totalCost = (usage.promptTokens / 1000000) * 0.075 + (usage.completionTokens / 1000000) * 0.30;
 
     if (extractedInput.isValidRequest === false) {
-      await db.insert(architectureReviews).values([{
-        status: 'error',
-        errorMessage: 'Invalid request: not a software project',
-        generationTimeMs: Date.now() - startTime,
-      }]);
+      if (recordId) {
+        await db.update(architectureReviews).set({
+          status: 'error',
+          errorMessage: 'Invalid request: not a software project',
+          generationTimeMs: Date.now() - startTime,
+          inputTokens: usage.promptTokens,
+          outputTokens: usage.completionTokens,
+          totalCost: totalCost,
+        }).where(eq(architectureReviews.id, recordId));
+      }
 
       return { 
         status: 'error', 
@@ -31,35 +85,27 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
       };
     }
 
-    // 2. Run the deterministic Rules Engine
+    // 3. Run the deterministic Rules Engine
     const output = recommendArchitecture(extractedInput);
 
     if (output.status === 'success') {
-      // Ensure the table exists in production without needing a CLI migration
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS "architecture_reviews" (
-          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-          "extracted_domains" jsonb,
-          "architecture_style" varchar(255),
-          "top_risks" jsonb,
-          "blind_spots" jsonb,
-          "generation_time_ms" integer,
-          "status" varchar(50),
-          "error_message" varchar,
-          "created_at" timestamp NOT NULL DEFAULT now()
-        );
-      `).catch(e => console.error("Table creation failed:", e));
-
-      // 3. Log the successful review to the database
-      // Note: We deliberately exclude the prompt for privacy
-      await db.insert(architectureReviews).values([{
-        status: 'success',
-        extractedDomains: sql`${JSON.stringify(extractedInput.archetypes.map(a => a.name))}::jsonb` as any,
-        architectureStyle: output.data.architectureStyle,
-        topRisks: sql`${JSON.stringify(output.data.businessRisks.map(r => r.risk))}::jsonb` as any,
-        blindSpots: sql`${JSON.stringify(output.data.domainBlindSpots || [])}::jsonb` as any,
-        generationTimeMs: Date.now() - startTime,
-      }]);
+      // 4. Log the successful review to the database
+      if (recordId) {
+        await db.update(architectureReviews).set({
+          status: 'success',
+          extractedDomains: sql`${JSON.stringify(extractedInput.archetypes.map(a => a.name))}::jsonb` as any,
+          architectureStyle: output.data.architectureStyle,
+          topRisks: sql`${JSON.stringify(output.data.businessRisks.map(r => r.risk))}::jsonb` as any,
+          blindSpots: sql`${JSON.stringify(output.data.domainBlindSpots || [])}::jsonb` as any,
+          generationTimeMs: Date.now() - startTime,
+          inputTokens: usage.promptTokens,
+          outputTokens: usage.completionTokens,
+          totalCost: totalCost,
+          unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
+          missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
+          confidenceScore: extractedInput.confidenceScore || 0,
+        }).where(eq(architectureReviews.id, recordId));
+      }
     }
 
     return output;
@@ -76,11 +122,19 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
 
     const generationTimeMs = Date.now() - startTime;
     
-    await db.insert(architectureReviews).values([{
-      status: 'error',
-      errorMessage: errorMessage,
-      generationTimeMs,
-    }]).catch(e => console.error("Failed to log error to DB:", e));
+    if (recordId) {
+      await db.update(architectureReviews).set({
+        status: 'error',
+        errorMessage: errorMessage,
+        generationTimeMs,
+      }).where(eq(architectureReviews.id, recordId)).catch(e => console.error("Failed to update error in DB:", e));
+    } else {
+      await db.insert(architectureReviews).values([{
+        status: 'error',
+        errorMessage: errorMessage,
+        generationTimeMs,
+      }]).catch(e => console.error("Failed to log error to DB:", e));
+    }
 
     // Catch rate limit errors from Gemini API
     if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {

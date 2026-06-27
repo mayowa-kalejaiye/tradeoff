@@ -47,6 +47,9 @@ export interface ArchitectureInput {
   complianceLevel?: ComplianceLevel;
   priority: Priority;
   technicalExperience: TechnicalExperience;
+  unknownTechnologies: string[];
+  missingNiches: string[];
+  confidenceScore: number;
 }
 
 export interface RecommendedItem {

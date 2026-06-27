@@ -1,6 +1,6 @@
 import React from 'react';
 import { getDashboardMetrics } from './actions';
-import { Activity, Clock, FileWarning, TrendingUp } from 'lucide-react';
+import { Activity, Clock, FileWarning, TrendingUp, CheckCircle, Brain, Target, Coins, BarChart3, Database } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,13 @@ export default async function DashboardPage() {
 
         {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <KPICard title="Total Reviews" value={metrics.totalReviews} icon={<TrendingUp className="w-5 h-5" />} />
+          <KPICard title="Total Reviews" value={metrics.totalStartedReviews} icon={<TrendingUp className="w-5 h-5" />} />
+          <KPICard title="Completion Rate" value={`${metrics.completionRate}%`} icon={<CheckCircle className="w-5 h-5" />} />
+          <KPICard title="Avg Confidence" value={`${metrics.avgConfidence}%`} icon={<Brain className="w-5 h-5" />} />
+          <KPICard title="Avg Prompt Length" value={`${metrics.avgPromptLength} chars`} icon={<Target className="w-5 h-5" />} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
           <KPICard title="Reviews Today" value={metrics.reviewsToday} icon={<Activity className="w-5 h-5" />} />
           <KPICard 
             title="Avg Gen Time" 
@@ -42,13 +48,66 @@ export default async function DashboardPage() {
             icon={<FileWarning className="w-5 h-5" />} 
             valueClass={metrics.failedReviews > 0 ? "text-red-400" : "text-green-400"}
           />
+          <KPICard title="Avg Cost/Review" value={`$${metrics.avgCost.toFixed(3)}`} icon={<Coins className="w-5 h-5" />} />
         </div>
 
-        {/* Breakdown Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <ListCard title="Top Domains" items={metrics.topDomains} color="purple" />
+        {/* Token Usage Summary */}
+        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row gap-8 justify-between mt-8 mb-8 items-center">
+          <div>
+            <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider flex items-center gap-2"><Database className="w-4 h-4"/> Token Usage Today</h3>
+            <p className="text-sm text-neutral-500 mt-1">Total tokens processed today across all requests</p>
+          </div>
+          <div className="flex gap-8">
+            <div className="text-right">
+              <p className="text-xs text-neutral-400 uppercase tracking-wider mb-1">Input Tokens</p>
+              <p className="text-xl font-semibold text-white">{(metrics.tokenUsageToday.input / 1000).toFixed(1)}k</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-neutral-400 uppercase tracking-wider mb-1">Output Tokens</p>
+              <p className="text-xl font-semibold text-white">{(metrics.tokenUsageToday.output / 1000).toFixed(1)}k</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-neutral-400 uppercase tracking-wider mb-1">Total Cost</p>
+              <p className="text-xl font-semibold text-emerald-400">${metrics.tokenUsageToday.cost.toFixed(3)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Breakdown Grid Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+          <ListCard title="Recommendation Frequency" items={metrics.topArchitectures} color="purple" />
+          <ListCard title="Top Domains" items={metrics.topDomains} color="blue" />
           <ListCard title="Top Existential Risks" items={metrics.topRisks} color="red" />
-          <ListCard title="Top Blind Spots" items={metrics.topBlindSpots} color="blue" />
+        </div>
+
+        {/* Breakdown Grid Row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <ListCard title="Missing Niches" items={metrics.missingNiches} color="emerald" />
+          <ListCard title="Unknown Technologies" items={metrics.unknownTechnologies} color="amber" />
+          <ListCard title="Top Blind Spots" items={metrics.topBlindSpots} color="neutral" />
+        </div>
+
+        {/* Knowledge Growth */}
+        <div className="mt-8 bg-white/5 border border-white/10 p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <BarChart3 className="w-6 h-6 text-emerald-400" />
+            <h3 className="text-lg font-medium text-white tracking-tight">Knowledge Growth</h3>
+          </div>
+          {metrics.engineUpdates.length === 0 ? (
+            <p className="text-neutral-500 text-sm">No recent engine updates.</p>
+          ) : (
+            <div className="space-y-4">
+              {metrics.engineUpdates.map((update, i) => (
+                <div key={i} className="flex items-start gap-4 pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                  <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                  <div>
+                    <p className="text-sm text-neutral-300 leading-relaxed">{update.description}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{new Date(update.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
@@ -75,6 +134,9 @@ function ListCard({ title, items, color }: { title: string; items: { name: strin
     purple: "bg-purple-500/20 text-purple-300 border-purple-500/30",
     red: "bg-red-500/20 text-red-300 border-red-500/30",
     blue: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    emerald: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    amber: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    neutral: "bg-neutral-500/20 text-neutral-300 border-neutral-500/30",
   };
 
   return (

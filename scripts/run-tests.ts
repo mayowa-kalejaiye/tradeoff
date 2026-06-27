@@ -40,7 +40,10 @@ for (const archetype of archetypes) {
             expectedUsers,
             priority,
             complianceLevel: compliance,
-            technicalExperience: 'senior_engineer'
+            technicalExperience: 'senior_engineer',
+            unknownTechnologies: [],
+            missingNiches: [],
+            confidenceScore: 100
           };
 
           const response = recommendArchitecture(input);
