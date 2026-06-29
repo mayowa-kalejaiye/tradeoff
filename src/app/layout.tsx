@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tradeoff.pxxl.run'),
   title: "Tradeoff | AI Technical Feasibility Advisor",
   description: "Get senior engineering judgment on day zero. Tradeoff analyzes your startup idea, uncovers existential risks, and recommends architecture based on actual tradeoffs.",
   keywords: ["software architecture", "technical advisor", "startup due diligence", "system design", "founder tools", "staff engineer"],
