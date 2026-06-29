@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://tradeoff.pxxl.run'),
   title: "Tradeoff | AI Technical Feasibility Advisor",
-  description: "Get senior engineering judgment on day zero. Tradeoff analyzes your startup idea, uncovers existential risks, and recommends architecture based on actual tradeoffs.",
+  description: "Engineering-informed business judgment for founders. Tradeoff analyzes your startup idea to uncover existential risks and recommend architecture.",
   keywords: ["software architecture", "technical advisor", "startup due diligence", "system design", "founder tools", "staff engineer"],
   authors: [{ name: "Tradeoff" }],
   openGraph: {
     title: "Tradeoff | AI Technical Feasibility Advisor",
-    description: "Stop building the wrong thing. Tradeoff acts as your Staff Engineer, analyzing your product brief to expose existential risks, architectural debt, and critical unknowns.",
+    description: "Stop building the wrong thing. Tradeoff acts as your Staff Engineer, exposing existential risks and architectural debt.",
     type: "website",
     locale: "en_US",
     siteName: "Tradeoff",
