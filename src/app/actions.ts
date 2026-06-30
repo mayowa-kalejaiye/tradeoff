@@ -108,7 +108,7 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
           unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
           missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
           confidenceScore: extractedInput.confidenceScore || 0,
-          rawInput: sql`${JSON.stringify(extractedInput)}::jsonb` as any,
+          rawInput: sql`${JSON.stringify({ ...extractedInput, brief: prompt })}::jsonb` as any,
           rawOutput: sql`${JSON.stringify(output.data)}::jsonb` as any,
         }).where(eq(architectureReviews.id, recordId));
       }
@@ -164,7 +164,7 @@ export async function getReviewInputById(id: string) {
     
     if (result.length > 0 && result[0].rawInput) {
       const parsedInput = result[0].rawInput as any;
-      return parsedInput.brief || null;
+      return parsedInput.brief || parsedInput.projectIdea || null;
     }
     return null;
   } catch (error) {
