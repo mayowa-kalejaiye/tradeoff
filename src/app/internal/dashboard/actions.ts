@@ -2,7 +2,17 @@
 
 import { db } from '@/db';
 import { architectureReviews, engineUpdates } from '@/db/schema';
-import { desc, sql, gte } from 'drizzle-orm';
+import { desc, sql, gte, isNotNull, eq } from 'drizzle-orm';
+
+export interface RecentReview {
+  id: string;
+  createdAt: Date;
+  brief: string;
+  architectureStyle: string;
+  confidenceScore: number;
+  isMisclassified: boolean;
+  feedbackNotes: string | null;
+}
 
 export async function getDashboardMetrics() {
   try {
@@ -17,6 +27,8 @@ export async function getDashboardMetrics() {
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "confidence_score" integer;
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_input" jsonb;
       ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "raw_output" jsonb;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "is_misclassified" boolean DEFAULT false;
+      ALTER TABLE "architecture_reviews" ADD COLUMN IF NOT EXISTS "feedback_notes" text;
     `).catch(e => console.error("Alter table failed in dashboard:", e));
 
     await db.execute(sql`
@@ -165,5 +177,56 @@ export async function getDashboardMetrics() {
   } catch (error) {
     console.error("Failed to fetch dashboard metrics", error);
     return null;
+  }
+}
+
+export async function getRecentReviews(limitCount: number = 50): Promise<RecentReview[]> {
+  try {
+    const records = await db.select({
+      id: architectureReviews.id,
+      createdAt: architectureReviews.createdAt,
+      rawInput: architectureReviews.rawInput,
+      architectureStyle: architectureReviews.architectureStyle,
+      confidenceScore: architectureReviews.confidenceScore,
+      isMisclassified: architectureReviews.isMisclassified,
+      feedbackNotes: architectureReviews.feedbackNotes,
+    })
+    .from(architectureReviews)
+    .where(isNotNull(architectureReviews.rawInput))
+    .orderBy(desc(architectureReviews.createdAt))
+    .limit(limitCount);
+
+    return records.map(r => {
+      const parsedInput = r.rawInput as any;
+      const brief = parsedInput?.brief || parsedInput?.projectIdea || 'Unknown Brief';
+      return {
+        id: r.id,
+        createdAt: r.createdAt,
+        brief,
+        architectureStyle: r.architectureStyle || 'Unknown',
+        confidenceScore: r.confidenceScore || 0,
+        isMisclassified: r.isMisclassified || false,
+        feedbackNotes: r.feedbackNotes || null,
+      };
+    });
+  } catch (error) {
+    console.error("Failed to fetch recent reviews:", error);
+    return [];
+  }
+}
+
+export async function markAsMisclassified(reviewId: string, notes: string) {
+  try {
+    await db.update(architectureReviews)
+      .set({ 
+        isMisclassified: true,
+        feedbackNotes: notes
+      })
+      .where(eq(architectureReviews.id, reviewId));
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to mark misclassified:", error);
+    return { success: false, error: 'Failed to update database' };
   }
 }

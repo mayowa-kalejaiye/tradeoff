@@ -1,4 +1,4 @@
-import { pgTable, uuid, timestamp, varchar, integer, jsonb, real } from "drizzle-orm/pg-core";
+import { pgTable, uuid, timestamp, varchar, integer, jsonb, real, boolean } from "drizzle-orm/pg-core";
 
 export const architectureReviews = pgTable("architecture_reviews", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -22,6 +22,10 @@ export const architectureReviews = pgTable("architecture_reviews", {
   // Public Sharing & Rehydration
   rawInput: jsonb("raw_input"),
   rawOutput: jsonb("raw_output"),
+
+  // Feedback Loop
+  isMisclassified: boolean("is_misclassified").default(false),
+  feedbackNotes: varchar("feedback_notes", { length: 2000 }),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

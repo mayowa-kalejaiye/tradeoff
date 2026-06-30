@@ -1,11 +1,15 @@
 import React from 'react';
-import { getDashboardMetrics } from './actions';
+import { getDashboardMetrics, getRecentReviews } from './actions';
 import { Activity, Clock, FileWarning, TrendingUp, CheckCircle, Brain, Target, Coins, BarChart3, Database } from 'lucide-react';
+import { ReviewFeed } from './ReviewFeed';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const metrics = await getDashboardMetrics();
+  const [metrics, recentReviews] = await Promise.all([
+    getDashboardMetrics(),
+    getRecentReviews(50)
+  ]);
 
   if (!metrics) {
     return (
@@ -109,6 +113,9 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Feedback Loop Feed */}
+        <ReviewFeed initialReviews={recentReviews} />
 
       </div>
     </div>
