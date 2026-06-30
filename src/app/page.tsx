@@ -26,6 +26,7 @@ function HomeEditor() {
   const remixId = searchParams.get('remix');
 
   const [prompt, setPrompt] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<EngineResponse | null>(null);
   const [error, setError] = useState('');
@@ -53,7 +54,7 @@ function HomeEditor() {
 
     startTransition(async () => {
       try {
-        const output = await processArchitectureRequest(prompt);
+        const output = await processArchitectureRequest(prompt, isPrivate);
         if (output.status === 'error') {
           setError(output.message);
         } else {
@@ -84,7 +85,7 @@ function HomeEditor() {
     
     startTransition(async () => {
       try {
-        const output = await processArchitectureRequest(newPrompt);
+        const output = await processArchitectureRequest(newPrompt, isPrivate);
         if (output.status === 'error') {
           setError(output.message);
         } else {
@@ -281,6 +282,23 @@ function HomeEditor() {
                 }`}
                 spellCheck="false"
               />
+              <div className="mt-3 flex items-start gap-2">
+                <input 
+                  type="checkbox" 
+                  id="isPrivate" 
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="mt-0.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" 
+                />
+                <div className="flex flex-col">
+                  <label htmlFor="isPrivate" className="text-xs font-medium text-zinc-700 cursor-pointer">
+                    Keep my brief private (disables public sharing link)
+                  </label>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                    We do not train our AI models on your startup ideas.
+                  </p>
+                </div>
+              </div>
             </div>
             
             <button

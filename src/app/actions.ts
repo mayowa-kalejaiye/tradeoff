@@ -9,7 +9,7 @@ import { sql } from 'drizzle-orm';
 
 import { eq } from 'drizzle-orm';
 
-export async function processArchitectureRequest(prompt: string): Promise<EngineResponse> {
+export async function processArchitectureRequest(prompt: string, isPrivate: boolean = false): Promise<EngineResponse> {
   if (!prompt || prompt.trim() === '') {
     throw new Error('Prompt cannot be empty');
   }
@@ -55,13 +55,15 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
 
   try {
     // 1. Log "started" state
-    const newRecord = await db.insert(architectureReviews).values({
-      status: 'started',
-      promptLength: prompt.length,
-    }).returning({ id: architectureReviews.id });
-    
-    if (newRecord.length > 0) {
-      recordId = newRecord[0].id;
+    if (!isPrivate) {
+      const newRecord = await db.insert(architectureReviews).values({
+        status: 'started',
+        promptLength: prompt.length,
+      }).returning({ id: architectureReviews.id });
+      
+      if (newRecord.length > 0) {
+        recordId = newRecord[0].id;
+      }
     }
 
     // 2. Extract structured data from the prompt using AI
