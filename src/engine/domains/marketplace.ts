@@ -21,7 +21,7 @@ export function handleMarketplace(input: ArchitectureInput): EngineResponse | nu
         }
       ],
       coreValidationQuestions: [
-        'How will listings be verified before Kyren Agents exist?',
+        'How will listings be verified (e.g., manual vs automated identity verification)?',
         'Who is allowed to create listings?',
         'How do you plan to handle payment escrow and chargebacks?'
       ],

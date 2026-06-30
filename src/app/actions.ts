@@ -55,18 +55,37 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
 
   try {
     // 1. Log "started" state
-    if (!isPrivate) {
-      const newRecord = await db.insert(architectureReviews).values({
-        status: 'started',
-        promptLength: prompt.length,
-      }).returning({ id: architectureReviews.id });
-      
-      if (newRecord.length > 0) {
-        recordId = newRecord[0].id;
-      }
+    const newRecord = await db.insert(architectureReviews).values({
+      status: 'started',
+      promptLength: prompt.length,
+    }).returning({ id: architectureReviews.id });
+    
+    if (newRecord.length > 0) {
+      recordId = newRecord[0].id;
     }
 
-    // 2. Extract structured data from the prompt using AI
+    // 2. Enforce prompt length pushback
+    const wordCount = prompt.trim().split(/\s+/).length;
+    if (wordCount < 15) {
+      if (recordId) {
+        await db.update(architectureReviews).set({
+          status: 'error',
+          errorMessage: 'Prompt too vague (under 15 words)',
+          generationTimeMs: Date.now() - startTime,
+        }).where(eq(architectureReviews.id, recordId));
+      }
+      return {
+        status: 'uncertainty',
+        reason: 'Your prompt is too vague. To recommend a proper architecture, I need to know more about the constraints.',
+        questions: [
+          'What is your expected scale (e.g. number of users or transactions)?',
+          'What is the priority for this project (e.g. speed to market, massive scale, strict reliability)?',
+          'What is the size of the engineering team that will maintain this?'
+        ]
+      };
+    }
+
+    // 3. Extract structured data from the prompt using AI
     const { input: extractedInput, usage } = await extractArchitectureInput(prompt);
 
     const inputTokens = (usage as any).inputTokens ?? usage.promptTokens ?? 0;
@@ -91,11 +110,11 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
       };
     }
 
-    // 3. Run the deterministic Rules Engine
+    // 4. Run the deterministic Rules Engine
     const output = recommendArchitecture(extractedInput);
 
     if (output.status === 'success') {
-      // 4. Log the successful review to the database
+      // 5. Log the successful review to the database
       if (recordId) {
         await db.update(architectureReviews).set({
           status: 'success',
@@ -110,11 +129,11 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
           unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
           missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
           confidenceScore: extractedInput.confidenceScore || 0,
-          rawInput: sql`${JSON.stringify({ ...extractedInput, brief: prompt })}::jsonb` as any,
-          rawOutput: sql`${JSON.stringify(output.data)}::jsonb` as any,
+          rawInput: isPrivate ? null : sql`${JSON.stringify({ ...extractedInput, brief: prompt })}::jsonb` as any,
+          rawOutput: isPrivate ? null : sql`${JSON.stringify(output.data)}::jsonb` as any,
         }).where(eq(architectureReviews.id, recordId));
       }
-      return { ...output, reviewId: recordId || undefined };
+      return { ...output, reviewId: isPrivate ? undefined : recordId || undefined };
     }
 
     return output;
