@@ -69,7 +69,9 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
     // 2. Extract structured data from the prompt using AI
     const { input: extractedInput, usage } = await extractArchitectureInput(prompt);
 
-    const totalCost = (usage.promptTokens / 1000000) * 0.075 + (usage.completionTokens / 1000000) * 0.30;
+    const inputTokens = (usage as any).inputTokens ?? usage.promptTokens ?? 0;
+    const outputTokens = (usage as any).outputTokens ?? usage.completionTokens ?? 0;
+    const totalCost = (inputTokens / 1000000) * 0.075 + (outputTokens / 1000000) * 0.30;
 
     if (extractedInput.isValidRequest === false) {
       if (recordId) {
@@ -77,9 +79,9 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
           status: 'error',
           errorMessage: 'Invalid request: not a software project',
           generationTimeMs: Date.now() - startTime,
-          inputTokens: usage.promptTokens,
-          outputTokens: usage.completionTokens,
-          totalCost: totalCost,
+          inputTokens,
+          outputTokens,
+          totalCost: Number(totalCost) || 0,
         }).where(eq(architectureReviews.id, recordId));
       }
 
@@ -102,9 +104,9 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
           topRisks: sql`${JSON.stringify(output.data.businessRisks.map(r => r.risk))}::jsonb` as any,
           blindSpots: sql`${JSON.stringify(output.data.domainBlindSpots || [])}::jsonb` as any,
           generationTimeMs: Date.now() - startTime,
-          inputTokens: usage.promptTokens,
-          outputTokens: usage.completionTokens,
-          totalCost: totalCost,
+          inputTokens,
+          outputTokens,
+          totalCost: Number(totalCost) || 0,
           unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
           missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
           confidenceScore: extractedInput.confidenceScore || 0,
