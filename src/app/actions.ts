@@ -152,3 +152,21 @@ export async function processArchitectureRequest(prompt: string): Promise<Engine
     return { status: 'error', message: `Server Error: ${errorMessage}` };
   }
 }
+
+export async function getReviewInputById(id: string) {
+  try {
+    const result = await db.select({ rawInput: architectureReviews.rawInput })
+      .from(architectureReviews)
+      .where(eq(architectureReviews.id, id))
+      .limit(1);
+    
+    if (result.length > 0 && result[0].rawInput) {
+      const parsedInput = result[0].rawInput as any;
+      return parsedInput.brief || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch review input:", error);
+    return null;
+  }
+}

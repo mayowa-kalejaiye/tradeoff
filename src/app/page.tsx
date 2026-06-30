@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { processArchitectureRequest } from './actions';
+import { useSearchParams } from 'next/navigation';
+import { processArchitectureRequest, getReviewInputById } from './actions';
 import { EngineResponse } from '@/engine/types';
 import { ReviewMemo } from '@/components/ReviewMemo';
 import { 
@@ -13,6 +14,17 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-50 flex items-center justify-center"><Loader className="w-6 h-6 text-zinc-400 animate-spin" /></div>}>
+      <HomeEditor />
+    </Suspense>
+  );
+}
+
+function HomeEditor() {
+  const searchParams = useSearchParams();
+  const remixId = searchParams.get('remix');
+
   const [prompt, setPrompt] = useState('');
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<EngineResponse | null>(null);
@@ -21,6 +33,16 @@ export default function Home() {
 
   const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
   const isOverLimit = wordCount > 150;
+
+  useEffect(() => {
+    if (remixId) {
+      getReviewInputById(remixId).then(brief => {
+        if (brief) {
+          setPrompt(brief);
+        }
+      }).catch(console.error);
+    }
+  }, [remixId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
