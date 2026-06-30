@@ -134,19 +134,25 @@ export function ReviewMemo({ data, inputArchetypes, reviewId, onExportMarkdown }
           </h3>
           <div className="grid grid-cols-1 gap-4">
             {data.businessRisks.map((risk, i) => (
-              <div key={i} className="bg-red-50 border border-red-200 border-l-4 border-l-red-600 rounded-md p-5 shadow-sm print:bg-white print:border-zinc-300 print:border-l-zinc-500 print:break-inside-avoid">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-red-900 print:text-black">{risk.risk}</div>
-                  <div className="flex gap-2">
-                    <div className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded uppercase tracking-wider print:border print:border-zinc-300 print:bg-white print:text-zinc-700">
-                      Severity: {risk.level}
+              <div key={i} className="relative bg-white border border-red-100 p-5 rounded-xl shadow-sm hover:shadow-md transition-all print:border-zinc-300 print:break-inside-avoid">
+                <div className="absolute top-0 left-0 w-1 h-full bg-red-500 rounded-l-xl print:bg-zinc-400"></div>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pl-2">
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-zinc-900 mb-1 print:text-black">{risk.risk}</h4>
+                    <p className="text-sm text-zinc-600 leading-relaxed print:text-zinc-800">{risk.reason}</p>
+                  </div>
+                  <div className="flex items-center gap-5 shrink-0 bg-zinc-50 px-4 py-2 rounded-lg border border-zinc-100 print:bg-white print:border-zinc-200">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-0.5 print:text-zinc-500">Severity</span>
+                      <span className={`text-xs font-bold ${risk.level === 'Critical' ? 'text-red-600' : 'text-amber-600'} print:text-zinc-800`}>{risk.level}</span>
                     </div>
-                    <div className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-wider print:border print:border-zinc-300 print:bg-white print:text-zinc-700">
-                      Likelihood: {risk.likelihood}
+                    <div className="w-px h-6 bg-zinc-200 print:bg-zinc-300"></div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-0.5 print:text-zinc-500">Likelihood</span>
+                      <span className={`text-xs font-bold ${risk.likelihood === 'High' ? 'text-red-600' : 'text-amber-600'} print:text-zinc-800`}>{risk.likelihood}</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-sm text-red-800/80 leading-relaxed print:text-zinc-800">{risk.reason}</div>
               </div>
             ))}
           </div>
