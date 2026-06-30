@@ -1,0 +1,8 @@
+[
+  {
+    "id": "biotech-platform",
+    "prompt": "We're building a BioTech platform that helps pharmaceutical companies and research institutions accelerate drug discovery using AI.\n\nResearchers can upload genomic sequences, protein structures, microscopy images, laboratory notes, and experimental results. The platform uses vector search with Qdrant to semantically search research data, scientific papers, and previous experiments.\n\nLong-running workflows such as sample processing, sequencing pipelines, experiment approvals, quality assurance, and laboratory automation are orchestrated with Temporal to guarantee reliable execution, retries, and workflow recovery.\n\nThe platform integrates with laboratory equipment, external sequencing providers, cloud HPC clusters, and electronic laboratory notebooks (ELNs).\n\nThe system stores highly sensitive scientific and patient-derived data and must comply with HIPAA, GDPR, and FDA 21 CFR Part 11.\n\nExpected users: 25,000 researchers.\n\nTeam: 10 senior engineers.\n\nRunway: 18 months.\n\nPriority: reliability",
+    "expectedKeywords": ["Temporal", "Qdrant", "biotechnology", "Workflow", "HIPAA", "FDA"],
+    "minimumConfidence": 85
+  }
+]

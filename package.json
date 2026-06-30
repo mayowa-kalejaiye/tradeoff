@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build && node scripts/copy-standalone.mjs",
     "start": "node start.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:ai": "tsx scripts/run-regression.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.83",

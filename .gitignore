@@ -15,7 +15,8 @@
 # testing
 /coverage
 
-# next.js
+# AI Regression Testing
+regression-report.md
 /.next/
 /out/
 
