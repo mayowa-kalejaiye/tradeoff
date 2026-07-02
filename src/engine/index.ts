@@ -24,80 +24,110 @@ import { handleMarketplace } from './domains/marketplace';
 import { handleBiotech } from './domains/biotech';
 import { runEnhancers } from './enhancers';
 import { extractOutputsOrPushback, mergeArchitectureOutputs } from './utils/compose';
+import { KnowledgeProvider, KnowledgePack } from './knowledge/types';
+import { JsonKnowledgeProvider } from './knowledge/jsonProvider';
+import { CardKnowledgeProvider } from './knowledge/cardProvider';
+import { marketplaceGraph } from './knowledge/cards/marketplace';
+import { roboticsGraph } from './knowledge/cards/robotics';
+import { computerVisionGraph } from './knowledge/cards/computer_vision';
+import { safetyCriticalGraph } from './knowledge/cards/safety_critical';
+import { fleetManagementGraph } from './knowledge/cards/fleet_management';
+import { physicalSafetyGraph } from './knowledge/cards/physical_safety';
+import { observabilityGraph } from './knowledge/cards/observability';
+import { generateAdaptationPatches } from '../ai/patcher';
+import { applyPatches } from '../ai/patcher/applier';
+import { resolveGraph } from './knowledge/resolver';
+import { StartupModel } from './models/startup';
 
-const domainHandlers: Partial<Record<string, (input: ArchitectureInput) => EngineResponse | null>> = {
-  internal_tool: handleInternal,
-  fintech: handleFintech,
-  realtime_collaboration: handleRealtime,
-  social_network: handleSocial,
-  healthcare: handleHealthcare,
-  ai_coding_assistant: handleCodingAssistant,
-  web3_dapp: handleWeb3,
-  iot_platform: handleIoT,
-  paas: handlePaaS,
-  search_engine: handleSearchEngine,
-  recommendation_engine: handleRecommendation,
-  ad_tech: handleAdTech,
-  video_streaming: handleStreaming,
-  cybersecurity: handleCybersecurity,
-  ai_infrastructure: handleAIInfra,
-  gis_mapping: handleGIS,
-  messaging: handleMessaging,
-  ride_hailing: handleRideHailing,
-  ci_cd: handleCICD,
-  marketplace: handleMarketplace,
-  biotechnology: handleBiotech
+export const KNOWLEDGE_VERSION = 'v2.0.0'; // Graph Engine
+export const GRAPH_SCHEMA_VERSION = 'v1.0';
+export const RESOLVER_VERSION = 'v1.0';
+
+const domainHandlers: Partial<Record<string, KnowledgeProvider>> = {
+  internal_tool: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleInternal),
+  fintech: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleFintech),
+  realtime_collaboration: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleRealtime),
+  social_network: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleSocial),
+  healthcare: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleHealthcare),
+  ai_coding_assistant: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleCodingAssistant),
+  web3_dapp: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleWeb3),
+  iot_platform: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleIoT),
+  paas: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handlePaaS),
+  search_engine: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleSearchEngine),
+  recommendation_engine: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleRecommendation),
+  ad_tech: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleAdTech),
+  video_streaming: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleStreaming),
+  cybersecurity: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleCybersecurity),
+  ai_infrastructure: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleAIInfra),
+  gis_mapping: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleGIS),
+  messaging: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleMessaging),
+  ride_hailing: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleRideHailing),
+  ci_cd: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleCICD),
+  biotechnology: new JsonKnowledgeProvider(KNOWLEDGE_VERSION, handleBiotech)
 };
 
-function getBaseDomainResponse(input: ArchitectureInput): EngineResponse {
-  // Check for Absolute Vetoes first (e.g., Internal Tools might just need a basic CRUD return)
-  if (input.archetypes.some(a => a.name === 'internal_tool')) {
-    const response = handleInternal(input);
-    if (response) return response;
-  }
+// Graph registry
+const graphRegistry: Record<string, any> = {
+  marketplace: marketplaceGraph,
+  robotics: roboticsGraph,
+  computer_vision: computerVisionGraph,
+  safety_critical: safetyCriticalGraph,
+  fleet_management: fleetManagementGraph,
+  physical_safety: physicalSafetyGraph,
+  observability: observabilityGraph
+};
 
-  // Sort archetypes by score descending, take top 3
-  const topArchetypes = [...input.archetypes]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
-  const responses: (EngineResponse | null)[] = [];
-
-  for (const arch of topArchetypes) {
-    const handler = domainHandlers[arch.name];
-    if (handler) {
-      const res = handler(input);
-      if (res) responses.push(res);
-    }
-  }
-
-  // Fallback if no specific domain handlers matched
-  if (responses.length === 0) {
-    const aiResponse = handleAIAndAutomation(input);
-    if (aiResponse) {
-      responses.push(aiResponse);
-    } else {
-      responses.push(handleDefault(input));
-    }
-  }
-
-  const { pushback, outputs } = extractOutputsOrPushback(responses);
-  if (pushback) return pushback; // If any domain pushed back with a question, return immediately
-
-  if (outputs.length === 0) {
-     return handleDefault(input);
-  }
-
-  const mergedOutput = mergeArchitectureOutputs(outputs);
-  return { status: 'success', data: mergedOutput, inputArchetypes: input.archetypes };
+function getKnowledgePack(input: StartupModel): KnowledgePack | EngineResponse {
+  // V5: We completely drop the legacy template veto system.
+  // We return a blank knowledge pack, meaning the UI is driven 100% by the Decision Graph.
+  return {
+    version: KNOWLEDGE_VERSION,
+    cards: [],
+    legacyOutput: undefined
+  };
 }
 
-export function recommendArchitecture(input: ArchitectureInput): EngineResponse {
-  const response = getBaseDomainResponse(input);
+export async function recommendArchitecture(input: StartupModel, rawPrompt: string): Promise<EngineResponse & { usage?: any, telemetry?: any }> {
+  // 1. Check for legacy domain handlers
+  const packOrResponse = getKnowledgePack(input);
+  if ('status' in packOrResponse) return packOrResponse as EngineResponse;
   
-  if (response.status === 'success') {
-    response.data = runEnhancers(input, response.data);
+  const knowledgePack = packOrResponse as KnowledgePack;
+
+  // 2. Build the Active Graph
+  // In V5, we merge ALL graphs. The resolver uses deterministic scoring 
+  // to filter out irrelevant capabilities. This is the Engineering Operating System.
+  const graphsToMerge = Object.values(graphRegistry);
+  const domainScores: Record<string, number> = {};
+  for (const cap of input.capabilities || []) {
+    domainScores[cap.name] = cap.score;
   }
 
-  return response;
+  // 3. Resolve the graph
+  const { activeGraph, telemetry } = resolveGraph(graphsToMerge, input, domainScores);
+
+  try {
+    // 4. LLM Synthesis (Pass executive facts)
+    const { adaptation, usage } = await generateAdaptationPatches(rawPrompt, input, telemetry.executiveFacts);
+    
+    // Track AI insights in telemetry
+    telemetry.insightPatches = adaptation.insightPatches ? adaptation.insightPatches.map((p: any) => p.observation) : [];
+
+    // 5. Apply Patches
+    const finalOutput = applyPatches(input, knowledgePack, adaptation, activeGraph, telemetry);
+    
+    const enhancedData = runEnhancers(input, finalOutput);
+
+    return { 
+      status: 'success', 
+      data: enhancedData, 
+      inputCapabilities: input.capabilities, 
+      usage,
+      telemetry
+    };
+  } catch (error) {
+    console.error("Failed to generate adaptation patches:", error);
+    const fallbackData = knowledgePack.legacyOutput || applyPatches(input, knowledgePack, { knowledgePatches: [], insightPatches: [], executiveSummary: '' }, activeGraph, telemetry);
+    return { status: 'success', data: runEnhancers(input, fallbackData), inputCapabilities: input.capabilities, telemetry };
+  }
 }

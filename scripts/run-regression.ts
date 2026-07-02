@@ -30,23 +30,23 @@ async function runTests() {
     try {
       const { input } = await extractArchitectureInput(testCase.prompt);
       
-      const engineResult = recommendArchitecture(input);
+      const engineResult = await recommendArchitecture(input, testCase.prompt);
       let architectureOutputText = '';
       if (engineResult.status === 'success') {
         const out = engineResult.data;
         architectureOutputText = [
           out.architectureStyle,
-          ...(out.stack?.map(s => s.name) || []),
-          ...(out.recommended?.map(r => r.name) || []),
+          ...(out.stack?.map((s: any) => s.name) || []),
+          ...(out.recommended?.map((r: any) => r.name) || []),
           ...(out.domainConstraints || []),
-          ...(out.businessRisks?.map(b => b.reason) || [])
+          ...(out.businessRisks?.map((b: any) => b.reason) || [])
         ].join(' ');
       }
 
       const allTextOutput = [
         input.projectIdea,
         input.complianceLevel,
-        ...(input.archetypes?.map(a => a.name) || []),
+        ...((input.capabilities || [])?.map(a => a.name) || []),
         ...(input.unknownTechnologies || []),
         ...(input.missingNiches || []),
         architectureOutputText

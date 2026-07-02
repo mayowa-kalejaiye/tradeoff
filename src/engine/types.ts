@@ -24,6 +24,11 @@ export type ProjectArchetype =
   | 'messaging'
   | 'ci_cd'
   | 'biotechnology'
+  | 'robotics'
+  | 'computer_vision'
+  | 'safety_critical'
+  | 'iot'
+  | 'autonomous_vehicle'
   | 'other';
 
 export interface ArchetypeScore {
@@ -37,25 +42,23 @@ export type UserMetric = 'registered' | 'mau' | 'concurrent' | 'unknown';
 export type TransactionVolume = 'low' | 'medium' | 'high' | 'unknown';
 export type ComplianceLevel = 'pci_dss' | 'hipaa' | 'soc2' | 'unknown';
 
-export interface ArchitectureInput {
-  isValidRequest: boolean;
-  projectIdea: string;
-  archetypes: ArchetypeScore[];
-  teamSize: number;
-  expectedUsers: number;
-  userMetric?: UserMetric;
-  transactionVolume?: TransactionVolume;
-  complianceLevel?: ComplianceLevel;
-  priority: Priority;
-  technicalExperience: TechnicalExperience;
-  unknownTechnologies: string[];
-  missingNiches: string[];
-  confidenceScore: number;
+import { StartupModel } from './models/startup';
+
+export type ArchitectureInput = StartupModel;
+
+export interface DecisionTrace {
+  source: 'knowledge_card' | 'llm_insight' | 'knowledge_graph';
+  patched: boolean;
+  reason?: string;
+  evidence?: string[];
+  confidence?: number;
+  knowledgeVersion: string;
 }
 
 export interface RecommendedItem {
   name: string;
   reasons: string[];
+  trace?: DecisionTrace;
 }
 
 export interface RejectedItem {
@@ -66,6 +69,55 @@ export interface RejectedItem {
 export interface StackComponent {
   name: string;
   category: 'frontend' | 'backend' | 'database' | 'cache' | 'queue' | 'ai' | 'other';
+  systemGroup?: string;
+  capability?: string;
+  trace?: DecisionTrace;
+}
+
+// ─── Decision Intelligence Types ───
+
+export interface DecisionCard {
+  recommendation: string;
+  capability?: string;
+  systemGroup: string;
+  evidence: string[];
+  principles: string[];
+  evidenceStrength: 'Strong' | 'Moderate' | 'Weak';
+  stability: 'Very Stable' | 'Moderately Stable' | 'Fragile';
+  
+  // Tradeoff knowledge
+  rationale: string;
+  winsWhen: string[];
+  losesWhen: string[];
+  antiPatterns: string[];
+  counterExamples: string[];
+  migrationPath: string[]; 
+  failureModes: { context: string; symptoms: string; detection: string; mitigation: string; recovery: string }[];
+  scaleLimit?: { breaksFirst: string; observableSymptom: string; mitigations: string[] };
+  alternatives: RejectedDecision[];
+  
+  knowledgeVersion: string;
+  lineage?: {
+    capability: string;
+    constraint: string;
+    intent: string;
+  };
+  engineeringComplexity?: 'High' | 'Medium' | 'Low';
+  operationalCost?: 'High' | 'Medium' | 'Low';
+}
+
+export interface RejectedDecision {
+  name: string;
+  reason: string;
+  capability: string;
+  lostTo: string;
+  winsWhen: string[];
+}
+
+export interface PressureMapEntry {
+  dimension: string;
+  pressure: number;
+  influencedDecisions: string[];
 }
 
 export interface BlueprintCategory {
@@ -115,6 +167,7 @@ export interface BusinessRisk {
   level: 'Critical' | 'High' | 'Medium';
   likelihood: 'High' | 'Medium' | 'Low';
   reason: string;
+  trace?: DecisionTrace;
 }
 
 export interface ConfidenceScores {
@@ -149,9 +202,13 @@ export interface ArchitectureOutput {
   nonNegotiables?: string[];
   failureModes?: FailureMode[];
   domainBlindSpots?: string[];
+  // Decision Intelligence
+  decisionCards?: DecisionCard[];
+  rejectedDecisions?: RejectedDecision[];
+  pressureMap?: PressureMapEntry[];
 }
 
 export type EngineResponse = 
-  | { status: 'success'; data: ArchitectureOutput; inputArchetypes?: ArchetypeScore[]; reviewId?: string }
+  | { status: 'success'; data: ArchitectureOutput; inputCapabilities?: { name: string; score: number; source: 'llm' | 'deterministic' }[]; reviewId?: string }
   | { status: 'uncertainty'; reason: string; questions: string[] }
   | { status: 'error'; message: string };

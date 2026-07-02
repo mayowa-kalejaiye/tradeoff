@@ -10,7 +10,7 @@ import {
   Terminal, Server, Layers, Cpu, Database, Cloud, 
   CheckCircle2, XCircle, AlertTriangle, ChevronRight, Zap,
   DollarSign, Activity, HelpCircle, MessagesSquare, FileText,
-  Search, Bell, User, LayoutTemplate, Download
+  Search, Bell, User, LayoutTemplate, Download, PanelLeftClose, PanelLeft
 } from 'lucide-react';
 
 export default function Home() {
@@ -31,6 +31,7 @@ function HomeEditor() {
   const [result, setResult] = useState<EngineResponse | null>(null);
   const [error, setError] = useState('');
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
   const isOverLimit = wordCount > 150;
@@ -220,6 +221,13 @@ function HomeEditor() {
       {/* Top Navbar */}
       <nav className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 shrink-0 z-20 sticky top-0">
         <div className="flex items-center gap-6">
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+            className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors -ml-2"
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center shadow-sm">
               <Layers className="w-4 h-4 text-white" />
@@ -256,7 +264,7 @@ function HomeEditor() {
       <div className="flex flex-col lg:flex-row flex-grow lg:overflow-hidden lg:h-[calc(100vh-3.5rem)]">
         
         {/* LEFT PANE: The Brief (Subtle Background) */}
-        <div className="lg:w-1/3 bg-zinc-50 lg:border-r border-zinc-200 lg:h-full lg:overflow-y-auto flex flex-col p-6 lg:p-10 shrink-0">
+        <div className={`${isSidebarCollapsed ? 'hidden' : 'flex flex-col'} lg:w-1/3 bg-zinc-50 lg:border-r border-zinc-200 lg:h-full lg:overflow-y-auto p-6 lg:p-10 shrink-0`}>
           <header className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">New Architecture Review</h1>
             <p className="text-zinc-500 text-sm leading-relaxed">
@@ -337,7 +345,7 @@ function HomeEditor() {
         </div>
 
         {/* RIGHT PANE: The Report (Pristine White) */}
-        <div className="lg:w-2/3 bg-white lg:h-full lg:overflow-y-auto relative">
+        <div className={`${isSidebarCollapsed ? 'w-full' : 'w-full lg:w-2/3'} bg-white lg:h-full lg:overflow-y-auto relative transition-all duration-300 ease-in-out`}>
           <AnimatePresence mode="wait">
             
             {/* Empty State */}
@@ -467,7 +475,7 @@ function HomeEditor() {
             {result && result.status === 'success' && !isPending && (
               <ReviewMemo 
                 data={result.data} 
-                inputArchetypes={result.inputArchetypes} 
+                inputCapabilities={result.inputCapabilities} 
                 reviewId={result.reviewId}
                 onExportMarkdown={handleExport}
               />

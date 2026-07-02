@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, BusinessRisk } from '../types';
 
 export function handleHealthcare(input: ArchitectureInput): EngineResponse | null {
-  const isHealthcare = input.archetypes.some(a => a.name === 'healthcare') || input.complianceLevel === 'hipaa';
+  const isHealthcare = (input.capabilities || []).some(a => a.name === 'healthcare') || input.complianceLevel === 'hipaa';
   if (!isHealthcare) return null;
 
   const promptText = input.projectIdea.toLowerCase();

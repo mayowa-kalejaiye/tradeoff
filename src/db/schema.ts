@@ -19,6 +19,19 @@ export const architectureReviews = pgTable("architecture_reviews", {
   missingNiches: jsonb("missing_niches").$type<string[]>(),
   confidenceScore: integer("confidence_score"),
   
+  // Granular Versioning
+  graphSchemaVersion: varchar("graph_schema_version", { length: 50 }),
+  knowledgeVersion: varchar("knowledge_version", { length: 50 }),
+  resolverVersion: varchar("resolver_version", { length: 50 }),
+  llmVersion: varchar("llm_version", { length: 50 }),
+  promptVersion: varchar("prompt_version", { length: 50 }),
+
+  // Telemetry (Engineering Decision Corpus)
+  activatedNodes: jsonb("activated_nodes").$type<string[]>(),
+  suppressedNodes: jsonb("suppressed_nodes").$type<string[]>(),
+  conflicts: jsonb("conflicts"), // Custom structure
+  insightPatches: jsonb("insight_patches").$type<string[]>(),
+
   // Public Sharing & Rehydration
   rawInput: jsonb("raw_input"),
   rawOutput: jsonb("raw_output"),

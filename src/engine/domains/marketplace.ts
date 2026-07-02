@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse } from '../types';
 
 export function handleMarketplace(input: ArchitectureInput): EngineResponse | null {
-  if (!input.archetypes.some(a => a.name === 'marketplace')) return null;
+  if (!(input.capabilities || []).some(a => a.name === 'marketplace')) return null;
 
   return {
     status: 'success',

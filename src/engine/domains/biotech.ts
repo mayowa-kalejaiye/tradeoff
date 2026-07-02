@@ -1,12 +1,12 @@
 import { ArchitectureInput, EngineResponse } from '../types';
 
 export function handleBiotech(input: ArchitectureInput): EngineResponse | null {
-  const isBiotech = input.archetypes.some(a => a.name === 'biotechnology');
+  const isBiotech = (input.capabilities || []).some(a => a.name === 'biotechnology');
   if (!isBiotech) return null;
 
   return {
     status: 'success',
-    inputArchetypes: input.archetypes,
+    inputCapabilities: (input.capabilities || []).map(c => ({...c, source: 'llm' as const})),
     data: {
       architectureStyle: 'Scientific Workflow Platform',
       confidenceScores: {

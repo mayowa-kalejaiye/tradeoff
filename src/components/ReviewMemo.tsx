@@ -1,24 +1,59 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { 
   Download, Layers, AlertTriangle, CheckCircle2, HelpCircle, 
-  XCircle, Server, Terminal, Database, Zap, Cpu, Cloud, ChevronRight, DollarSign, Share
+  XCircle, Server, Zap, ChevronRight, Share, Sparkles, Activity,
+  ActivityIcon, Target, Box
 } from 'lucide-react';
-import { ArchitectureOutput, ArchetypeScore } from '@/engine/types';
+import { ArchitectureOutput } from '@/engine/types';
 
 interface ReviewMemoProps {
   data: ArchitectureOutput;
-  inputArchetypes?: ArchetypeScore[];
+  inputCapabilities?: { name: string; score: number; source: 'llm' | 'deterministic' }[];
   reviewId?: string;
   onExportMarkdown?: () => void;
 }
 
-export function ReviewMemo({ data, inputArchetypes, reviewId, onExportMarkdown }: ReviewMemoProps) {
+const SYSTEM_METADATA: Record<string, { name: string; purpose: string; whyItExists: string; dependsOn: string[] }> = {
+  'edge_runtime': {
+    name: 'Edge Runtime',
+    purpose: 'Guarantees deterministic execution and offline autonomy at the edge.',
+    whyItExists: 'Robots must operate locally without network dependency to prevent physical damage or deadlocks.',
+    dependsOn: []
+  },
+  'fleet_communications': {
+    name: 'Fleet Communications',
+    purpose: 'Facilitates reliable, low-bandwidth synchronization between offline-first agents and the cloud.',
+    whyItExists: 'Hospitals have intermittent WiFi. Connections drop continuously, requiring robust buffering and pub/sub.',
+    dependsOn: ['edge_runtime']
+  },
+  'observability': {
+    name: 'Safety & Observability',
+    purpose: 'Provides cryptographically verifiable logs and immediate fault detection.',
+    whyItExists: 'Medical devices are highly regulated. When a robot fails, we must prove what the software knew and when.',
+    dependsOn: ['fleet_communications']
+  },
+  'mission_control': {
+    name: 'Mission Control',
+    purpose: 'Coordinates fleet-wide tasks, traffic, and hospital API integration.',
+    whyItExists: 'Robots cannot optimize fleet-level routing or predict elevator schedules locally.',
+    dependsOn: ['fleet_communications']
+  }
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: (custom: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: custom * 0.05, duration: 0.4, ease: 'easeOut' }
+  })
+};
+
+export function ReviewMemo({ data, inputCapabilities, reviewId }: ReviewMemoProps) {
   
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const handleCopyLink = async () => {
     if (reviewId) {
@@ -30,393 +65,301 @@ export function ReviewMemo({ data, inputArchetypes, reviewId, onExportMarkdown }
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="p-8 lg:p-16 max-w-4xl mx-auto space-y-12 print:p-0 print:m-0 print:space-y-8"
+      initial="hidden" animate="visible"
+      className="p-4 md:p-8 lg:p-12 max-w-[1400px] mx-auto min-h-screen bg-zinc-50 print:p-0 print:m-0"
     >
-      {/* Report Header */}
-      <div className="border-b border-zinc-200 pb-8 print:pb-4">
-        <div className="flex items-center justify-between mb-6 print:hidden">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Review Memo</span>
+      <div className="bento-grid mb-12">
+        {/* Header Block */}
+        <motion.div variants={fadeUp} custom={1} className="col-span-12 lg:col-span-8 flex flex-col justify-end pb-8">
+          <div className="flex items-center gap-3 mb-6 print:hidden">
+            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Formal Architecture Review</span>
           </div>
-          <div className="flex items-center gap-2">
-            {reviewId && (
-              <button 
-                onClick={handleCopyLink}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 rounded shadow-sm hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
-              >
-                <Share className="w-3.5 h-3.5" />
-                Copy Link
-              </button>
-            )}
-            <button 
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 rounded shadow-sm hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Export to PDF
-            </button>
-            {onExportMarkdown && (
-              <button 
-                onClick={onExportMarkdown}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-600 bg-white border border-zinc-200 rounded shadow-sm hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
-              >
-                <Terminal className="w-3.5 h-3.5" />
-                Export MD
-              </button>
-            )}
-          </div>
-        </div>
-        
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 mb-4 flex items-center gap-3">
-          <Layers className="text-indigo-500 shrink-0" />
-          {data.architectureStyle}
-        </h2>
+          
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-900 mb-4">
+            {data.architectureStyle}
+          </h2>
 
-        {inputArchetypes && inputArchetypes.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {inputArchetypes
+          <div className="flex flex-wrap gap-2 mt-4">
+            {inputCapabilities && inputCapabilities
               .slice()
               .sort((a, b) => b.score - a.score)
               .map((arch, i) => (
-              <div key={i} className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-full shadow-sm print:shadow-none print:border-zinc-300">
-                <span className="text-xs font-bold text-zinc-700 capitalize">{arch.name.replace(/_/g, ' ')}</span>
-                <span className="text-amber-400 font-mono text-[10px] tracking-widest">{arch.score}</span>
+              <div key={i} className="flex items-center gap-1.5 bg-white border border-zinc-200 px-3 py-1.5 rounded-full shadow-sm text-[11px] font-medium text-zinc-600">
+                <Box className="w-3 h-3 text-indigo-400" />
+                {arch.name.replace(/_/g, ' ')}
               </div>
             ))}
           </div>
-        )}
-        
-        <div className="pl-4 border-l-2 border-zinc-200 print:border-zinc-400">
-          <p className="text-sm font-bold text-zinc-900 mb-2">Primary Reasoning:</p>
-          <ul className="space-y-3">
-            {data.recommended[0]?.reasons.map((reason, j) => (
-              <li key={j} className="text-sm text-zinc-600 leading-relaxed print:text-black">
-                {reason}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* --- LAYER 2: Domain-Specific Intelligence --- */}
-      <div className="pt-6 print:pt-4 print:break-inside-avoid">
-        <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2 print:border-zinc-300">
-          <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs print:bg-zinc-100 print:text-zinc-900 print:border print:border-zinc-300">2</span>
-          Domain-Specific Intelligence
-        </h2>
+        {/* Actions Block */}
+        <motion.div variants={fadeUp} custom={2} className="col-span-12 lg:col-span-4 flex items-end justify-start lg:justify-end pb-8 gap-3 print:hidden">
+            {reviewId && (
+              <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:border-zinc-300 hover:shadow-sm transition-all">
+                <Share className="w-3.5 h-3.5" /> Copy Link
+              </button>
+            )}
+            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 shadow-md transition-all">
+              <Download className="w-3.5 h-3.5" /> PDF Export
+            </button>
+        </motion.div>
 
-        {/* Domain Blind Spots */}
-        {data.domainBlindSpots && data.domainBlindSpots.length > 0 && (
-          <div className="space-y-4 mb-8">
-            <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-zinc-800">
-              <AlertTriangle className="w-4 h-4" /> Domain Blind Spots
+        {/* Executive Summary */}
+        <motion.div variants={fadeUp} custom={3} className="col-span-12 mb-12">
+          <div className="border-t-4 border-black pt-6">
+            <h3 className="text-sm font-mono font-bold uppercase tracking-widest text-black mb-8">
+              // Executive Summary
             </h3>
-            <div className="bg-indigo-50 border border-indigo-200 border-l-4 border-l-indigo-600 rounded-md p-5 shadow-sm print:bg-white print:border-zinc-300 print:border-l-zinc-500">
-              <ul className="space-y-3">
-                {data.domainBlindSpots.map((spot, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 shrink-0 print:bg-zinc-400"></div>
-                    <span className="text-sm font-medium text-indigo-900 leading-relaxed print:text-black">{spot}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
+              {data.recommended[0]?.reasons.map((reason, j) => (
+                <p key={j} className="text-xl text-black leading-relaxed font-medium">
+                  {reason}
+                </p>
+              ))}
             </div>
           </div>
-        )}
+        </motion.div>
 
-      {/* Business Risks */}
-      {data.businessRisks && data.businessRisks.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-zinc-800">
-            <AlertTriangle className="w-4 h-4" /> Existential Business Risks
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            {data.businessRisks.map((risk, i) => (
-              <div key={i} className="relative bg-white border border-red-100 p-5 rounded-xl shadow-sm hover:shadow-md transition-all print:border-zinc-300 print:break-inside-avoid">
-                <div className="absolute top-0 left-0 w-1 h-full bg-red-500 rounded-l-xl print:bg-zinc-400"></div>
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pl-2">
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-zinc-900 mb-1 print:text-black">{risk.risk}</h4>
-                    <p className="text-sm text-zinc-600 leading-relaxed print:text-zinc-800">{risk.reason}</p>
-                  </div>
-                  <div className="flex items-center gap-5 shrink-0 bg-zinc-50 px-4 py-2 rounded-lg border border-zinc-100 print:bg-white print:border-zinc-200">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-0.5 print:text-zinc-500">Severity</span>
-                      <span className={`text-xs font-bold ${risk.level === 'Critical' ? 'text-red-600' : 'text-amber-600'} print:text-zinc-800`}>{risk.level}</span>
-                    </div>
-                    <div className="w-px h-6 bg-zinc-200 print:bg-zinc-300"></div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-0.5 print:text-zinc-500">Likelihood</span>
-                      <span className={`text-xs font-bold ${risk.likelihood === 'High' ? 'text-red-600' : 'text-amber-600'} print:text-zinc-800`}>{risk.likelihood}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Domain Constraints */}
-      {data.domainConstraints && data.domainConstraints.length > 0 && (
-        <div className="space-y-4 mt-8 print:break-inside-avoid">
-          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-zinc-500" /> Hard Domain Constraints
-          </h3>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {data.domainConstraints.map((constraint, i) => (
-              <li key={i} className="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-md print:bg-white print:border-zinc-300">
-                <CheckCircle2 className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
-                <span className="text-sm text-zinc-700 leading-snug print:text-black">{constraint}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Core Validation Questions */}
-      {data.coreValidationQuestions && data.coreValidationQuestions.length > 0 && (
-        <div className="space-y-4 mt-8 print:break-inside-avoid">
-          <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-zinc-800">
-            <Layers className="w-4 h-4" /> What We Would Validate First
-          </h3>
-          <div className="bg-indigo-50 border border-indigo-100 rounded-md p-5 shadow-sm print:bg-white print:border-zinc-300">
-            <ol className="list-decimal list-inside space-y-3">
-              {data.coreValidationQuestions.map((question, i) => (
-                <li key={i} className="text-sm font-medium text-indigo-900 leading-relaxed print:text-black">
-                  {question}
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      )}
-
-      {/* Critical Unknowns */}
-      {data.criticalUnknowns && data.criticalUnknowns.length > 0 && (
-        <div className="space-y-4 mt-8 print:break-inside-avoid">
-          <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-zinc-800">
-            <HelpCircle className="w-4 h-4 text-amber-500" /> Critical Unknowns
-          </h3>
-          <div className="bg-amber-50/50 border border-amber-200/60 rounded-md p-5 shadow-sm print:bg-white print:border-zinc-300">
-            <ul className="space-y-3">
-              {data.criticalUnknowns.map((q, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0 print:bg-zinc-400"></div>
-                  <span className="text-sm font-medium text-amber-900 leading-snug print:text-black">{q}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Strategic Advantages */}
-      {data.strategicAdvantages && data.strategicAdvantages.length > 0 && (
-        <div className="space-y-4 mt-8 print:break-inside-avoid">
-          <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-zinc-800">
-            <CheckCircle2 className="w-4 h-4" /> Strategic Advantages
-          </h3>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {data.strategicAdvantages.map((advantage, i) => (
-              <li key={i} className="flex items-start gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-md print:bg-white print:border-zinc-300">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0 print:bg-zinc-400"></div>
-                <span className="text-sm text-emerald-800 leading-snug print:text-black">{advantage}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      </div>
-
-      {/* --- LAYER 3: Architectural Nuance --- */}
-      <div className="pt-8 print:pt-4 print:break-inside-avoid">
-        <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2 print:border-zinc-300">
-          <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs print:bg-zinc-100 print:text-zinc-900 print:border print:border-zinc-300">3</span>
-          Architectural Nuance & Tradeoffs
-        </h2>
-
-      {/* Vetoes and Debt */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
-        {/* Deferred Decisions */}
-        <div>
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-zinc-400" /> Intentionally Deferred
-          </h3>
-          <div className="space-y-4">
-            {data.deferredDecisions.length > 0 ? data.deferredDecisions.map((item, i) => (
-              <div key={i} className="bg-white border border-zinc-200 border-l-4 border-l-red-500 rounded-md p-4 shadow-sm print:border-zinc-300 print:border-l-zinc-500 print:break-inside-avoid">
-                <div className="text-sm font-bold text-zinc-900 mb-1">{item.name}</div>
-                <div className="text-sm text-zinc-600 leading-relaxed print:text-zinc-800">{item.reason}</div>
-              </div>
-            )) : (
-              <div className="text-sm text-zinc-400 italic">No major components deferred.</div>
-            )}
-          </div>
-        </div>
-
-        {/* Architecture Debt */}
-        <div>
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-zinc-400" /> Accepted Debt
-          </h3>
-          <div className="space-y-4">
-            {data.architectureDebt.length > 0 ? data.architectureDebt.map((item, i) => (
-              <div key={i} className="bg-white border border-zinc-200 border-l-4 border-l-amber-500 rounded-md p-4 shadow-sm print:border-zinc-300 print:border-l-zinc-500 print:break-inside-avoid">
-                <div className="text-sm font-bold text-zinc-900 mb-1">{item.debt}</div>
-                <div className="text-sm text-zinc-600 leading-relaxed print:text-zinc-800">{item.reason}</div>
-              </div>
-            )) : (
-              <div className="text-sm text-zinc-400 italic">No significant architectural debt identified.</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Assumptions */}
-      <div className="pt-6 border-t border-zinc-100 mt-8 print:break-inside-avoid">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-zinc-400" /> Core Assumptions
-          </h3>
-          {data.assumptionRisk && (
-            <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border print:border-zinc-300 print:bg-white print:text-zinc-800
-              ${data.assumptionRisk.level === 'High' ? 'bg-red-50 text-red-600 border-red-200' : 
-                data.assumptionRisk.level === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-200' : 
-                'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-              Risk Level: {data.assumptionRisk.level}
+        {/* Pressure Map - Blueprint Metrics */}
+        {data.pressureMap && data.pressureMap.length > 0 && (
+          <motion.div variants={fadeUp} custom={4} className="col-span-12 mt-16">
+            <div className="border-t-4 border-black pt-6 mb-8">
+              <h3 className="text-sm font-mono font-bold uppercase tracking-widest text-black">
+                // Architecture Drivers
+              </h3>
             </div>
-          )}
-        </div>
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          {data.assumptions.map((assumption, i) => (
-            <li key={i} className="flex items-start gap-3 p-3 bg-zinc-50 border border-zinc-100 rounded-md print:bg-white print:border-zinc-300">
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-1.5 shrink-0" />
-              <span className="text-sm text-zinc-700 leading-snug print:text-black">{assumption}</span>
-            </li>
-          ))}
-        </ul>
-        {data.assumptionRisk && (
-          <div className="text-sm text-zinc-600 pl-4 border-l-2 border-zinc-200 print:text-zinc-800 print:border-zinc-400">
-            <span className="font-semibold text-zinc-900 print:text-black">Risk Analysis:</span> {data.assumptionRisk.reason}
-          </div>
-        )}
-      </div>
-
-      {/* Non-Negotiable Components */}
-      {data.nonNegotiables && data.nonNegotiables.length > 0 && (
-        <div className="pt-6 border-t border-zinc-100 mt-8 print:break-inside-avoid">
-          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Server className="w-4 h-4 text-zinc-500" /> Non-Negotiable Infrastructure
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            {data.nonNegotiables.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-md shadow-sm print:bg-white print:border-zinc-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5 print:text-zinc-500" />
-                <span className="text-sm font-medium text-zinc-100 leading-snug print:text-black">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      </div>
-
-      {/* --- LAYER 1: Core Architecture (Implementation Details) --- */}
-      <div className="pt-8 print:pt-4 print:break-inside-avoid">
-        <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-100 pb-2 print:border-zinc-300">
-          <span className="bg-zinc-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs print:bg-zinc-100 print:text-zinc-900 print:border print:border-zinc-300">1</span>
-          Core Architecture Details
-        </h2>
-
-      {/* Stack & Deployment Overview */}
-      <div className="pt-6">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-          <Server className="w-4 h-4 text-zinc-400" /> Implementation Overview
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Tech Stack List */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-zinc-900 mb-2">Core Stack</h4>
-            <div className="divide-y divide-zinc-100 border-y border-zinc-100 print:divide-zinc-300 print:border-zinc-300">
-              {data.stack.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 py-3">
-                  <div className="w-8 h-8 rounded bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0 print:bg-white print:border-zinc-300">
-                    {item.category === 'frontend' && <Terminal className="w-4 h-4 text-zinc-500" />}
-                    {item.category === 'backend' && <Server className="w-4 h-4 text-zinc-500" />}
-                    {item.category === 'database' && <Database className="w-4 h-4 text-zinc-500" />}
-                    {item.category === 'cache' && <Zap className="w-4 h-4 text-zinc-500" />}
-                    {item.category === 'ai' && <Cpu className="w-4 h-4 text-zinc-500" />}
-                    {item.category === 'queue' && <Layers className="w-4 h-4 text-zinc-500" />}
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[2px] bg-black border-t-2 border-b-2 border-black">
+              {data.pressureMap.map((p, i) => (
+                <div key={i} className="bg-zinc-50 p-6 flex flex-col justify-between">
                   <div>
-                    <div className="text-sm font-bold text-zinc-900">{item.name}</div>
-                    <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{item.category}</div>
+                    <div className="font-mono text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">{p.dimension}</div>
+                    <div className="text-5xl font-black tracking-tighter text-black mb-6">{p.pressure}%</div>
                   </div>
+                  
+                  <div className="w-full h-2 bg-zinc-200 mb-6">
+                    <div 
+                      className="h-full bg-black"
+                      style={{ width: `${Math.min(100, p.pressure)}%` }}
+                    />
+                  </div>
+
+                  {p.influencedDecisions && p.influencedDecisions.length > 0 && (
+                    <div className="pt-4 border-t border-black/10 flex flex-wrap gap-2">
+                      {p.influencedDecisions.slice(0,3).map((dec, idx) => (
+                        <span key={idx} className="font-mono text-[9px] uppercase font-bold text-black border border-black px-1.5 py-0.5">
+                          {dec.replace(/_/g, ' ')}
+                        </span>
+                      ))}
+                      {p.influencedDecisions.length > 3 && (
+                        <span className="font-mono text-[9px] font-bold text-zinc-400 px-1 py-0.5">+{p.influencedDecisions.length - 3}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
+        )}
 
-          {/* Infrastructure Overview */}
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
-                <Cloud className="w-4 h-4 text-zinc-400" /> Target Deployment
-              </h4>
-              <ul className="space-y-2">
-                {data.deployment.map((dep, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-zinc-600 print:text-black">
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-300 print:text-zinc-400" />
-                    {dep}
-                  </li>
-                ))}
-              </ul>
+        {/* Existential Risks */}
+        {data.businessRisks && data.businessRisks.length > 0 && (
+          <motion.div variants={fadeUp} custom={5} className="col-span-12 mt-16">
+            <div className="border-t-4 border-black pt-6 mb-8">
+              <h3 className="text-sm font-mono font-bold uppercase tracking-widest text-black">
+                // Risk Analysis
+              </h3>
             </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-[2px] bg-black border-t-2 border-b-2 border-black">
+              {data.businessRisks.map((risk, i) => (
+                <div key={i} className="bg-zinc-50 p-8 flex flex-col">
+                  <div className="flex justify-between items-start mb-6">
+                    <h4 className="text-2xl font-bold text-black tracking-tight">{risk.risk}</h4>
+                    <span className="font-mono text-xs font-bold px-3 py-1 bg-black text-white uppercase tracking-widest shrink-0 ml-4">
+                      SEV: {risk.level}
+                    </span>
+                  </div>
+                  
+                  <p className="text-base text-zinc-800 leading-relaxed font-medium mb-8 flex-1">{risk.reason}</p>
 
-            {/* Operating Cost Drivers */}
-            {data.operatingCostDrivers && data.operatingCostDrivers.length > 0 && (
-              <div>
-                <h4 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-zinc-400" /> Estimated Operating Cost Drivers
-                </h4>
-                <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4 print:bg-white print:border-zinc-300">
-                  <ul className="space-y-3">
-                    {data.operatingCostDrivers.map((driver, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-2 shrink-0"></div>
-                        <span className="text-sm text-zinc-700 leading-snug print:text-black">{driver}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {risk.trace?.patched && (
+                    <div className="mt-auto pt-6 border-t border-black/10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-xs font-bold text-black uppercase tracking-[0.2em] flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-black"></span> AI Insight
+                        </span>
+                      </div>
+                      <p className="text-sm text-zinc-600 leading-relaxed font-serif italic mb-4">"{risk.trace.reason}"</p>
+                      {risk.trace.evidence && (
+                        <div className="flex flex-wrap gap-2">
+                          {risk.trace.evidence.map((ev, eIdx) => (
+                            <span key={eIdx} className="font-mono text-[10px] text-black uppercase border border-black px-2 py-1">{ev}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-            {/* Failure Modes */}
-            {data.failureModes && data.failureModes.length > 0 && (
-              <div className="pt-6 border-t border-zinc-200 print:border-zinc-300">
-                <h4 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 print:text-zinc-800" /> Failure Modes
-                </h4>
-                <div className="space-y-4">
-                  {data.failureModes.map((fm, i) => (
-                    <div key={i} className="bg-amber-50/50 border border-amber-100 rounded-md p-4 print:bg-white print:border-zinc-300">
-                      <div className="font-semibold text-zinc-900 text-sm mb-1">{fm.component}</div>
-                      <div className="text-sm text-zinc-700 leading-relaxed flex gap-2 print:text-black">
-                        <span className="text-amber-500 shrink-0 print:text-zinc-500">→</span>
-                        <span>{fm.impact}</span>
+        {/* Core Architecture */}
+        {data.decisionCards && data.decisionCards.length > 0 && (
+          <motion.div variants={fadeUp} custom={6} className="col-span-12 mt-16">
+            <div className="border-t-4 border-black pt-6 mb-12">
+              <h3 className="text-sm font-mono font-bold uppercase tracking-widest text-black">
+                // System Topology
+              </h3>
+            </div>
+            
+            {Object.entries(
+              data.decisionCards.reduce((acc, card) => {
+                if (!acc[card.systemGroup]) acc[card.systemGroup] = [];
+                acc[card.systemGroup].push(card);
+                return acc;
+              }, {} as Record<string, typeof data.decisionCards>)
+            ).map(([group, cards], gIdx) => (
+              <div key={group} className="mb-16">
+                
+                {/* Group Header */}
+                {SYSTEM_METADATA[group] ? (
+                  <div className="mb-8">
+                    <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-4xl font-black text-black tracking-tighter uppercase mb-3">{SYSTEM_METADATA[group].name}</h4>
+                        <p className="text-lg text-zinc-600 font-medium max-w-2xl">{SYSTEM_METADATA[group].purpose}</p>
+                      </div>
+                      {SYSTEM_METADATA[group].dependsOn.length > 0 && (
+                        <div className="flex gap-2 flex-wrap">
+                          {SYSTEM_METADATA[group].dependsOn.map(dep => (
+                            <div key={dep} className="font-mono flex items-center gap-2 text-[10px] uppercase font-bold text-black border-2 border-black px-3 py-1.5 shrink-0">
+                              DEPENDS: {SYSTEM_METADATA[dep]?.name || dep}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <h4 className="text-4xl font-black text-black tracking-tighter uppercase mb-8">
+                    {group.replace(/_/g, ' ')}
+                  </h4>
+                )}
+                
+                {/* Cards Blueprint Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-[2px] bg-black border-t-2 border-b-2 border-black">
+                  {cards.map((card, i) => {
+                    const isSingleCard = cards.length === 1;
+                    const colSpan = isSingleCard ? 'lg:col-span-12' : (card.rationale?.length > 150 ? 'lg:col-span-8' : 'lg:col-span-4');
+                    
+                    return (
+                    <div 
+                      key={i} 
+                      className={`bg-zinc-50 p-8 flex flex-col col-span-1 ${colSpan}`}
+                    >
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h5 className="text-3xl font-bold text-black tracking-tighter mb-2">{card.recommendation}</h5>
+                          {card.capability && (
+                            <div className="font-mono text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                              // {card.capability.replace(/_/g, ' ')}
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-mono text-[10px] uppercase font-bold tracking-widest px-2 py-1 border border-black text-black shrink-0 ml-4">
+                          {card.stability}
+                        </span>
+                      </div>
+
+                      {card.rationale && (
+                        <p className="text-base text-zinc-800 leading-relaxed font-medium mb-8 flex-1">
+                          {card.rationale}
+                        </p>
+                      )}
+
+                      <div className="mt-auto space-y-8">
+                        {(card.winsWhen?.length || card.losesWhen?.length) ? (
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pt-6 border-t border-black/10">
+                            {card.winsWhen && card.winsWhen.length > 0 && (
+                              <div>
+                                <div className="text-[10px] font-mono uppercase font-bold text-black tracking-widest mb-4">
+                                  + Wins When
+                                </div>
+                                <ul className="text-sm text-zinc-600 space-y-3">
+                                  {card.winsWhen.map((w, j) => (
+                                    <li key={j} className="flex gap-3 items-start leading-snug">
+                                      <span className="text-black shrink-0 font-mono">→</span>
+                                      <span>{w}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {card.losesWhen && card.losesWhen.length > 0 && (
+                              <div>
+                                <div className="text-[10px] font-mono uppercase font-bold text-black tracking-widest mb-4">
+                                  - Loses When
+                                </div>
+                                <ul className="text-sm text-zinc-600 space-y-3">
+                                  {card.losesWhen.map((w, j) => (
+                                    <li key={j} className="flex gap-3 items-start leading-snug">
+                                      <span className="text-black shrink-0 font-mono">→</span>
+                                      <span>{w}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+
+                        {card.scaleLimit && (
+                          <div className="pt-6 border-t border-black/10">
+                            <div className="text-[10px] font-mono uppercase font-bold text-black tracking-widest mb-3">
+                              ! Scale Limit
+                            </div>
+                            <div className="font-mono text-sm text-black font-bold mb-4 bg-zinc-100 p-3">
+                              {card.scaleLimit.breaksFirst}
+                            </div>
+                            {card.scaleLimit.mitigations && card.scaleLimit.mitigations.length > 0 && (
+                              <div className="space-y-2">
+                                {card.scaleLimit.mitigations.map((m, mIdx) => (
+                                  <div key={mIdx} className="flex gap-3 text-xs text-zinc-500 font-mono leading-snug">
+                                    <span className="shrink-0">↳</span>
+                                    <span>{m}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {card.alternatives && card.alternatives.length > 0 && (
+                          <div className="pt-6 border-t border-black/10">
+                            <div className="text-[10px] font-mono uppercase font-bold text-zinc-400 tracking-widest mb-4">
+                              ? Why Not
+                            </div>
+                            <div className="space-y-4">
+                              {card.alternatives.map((alt, idx) => (
+                                <div key={idx}>
+                                  <div className="font-mono text-zinc-400 text-xs font-bold line-through mb-1">{alt.name}</div>
+                                  <div className="text-sm text-zinc-500 leading-relaxed italic">{alt.reason}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-            )}
-        </div>
-      </div>
-      </div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

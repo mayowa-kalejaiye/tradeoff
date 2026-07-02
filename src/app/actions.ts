@@ -110,33 +110,50 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
       };
     }
 
-    // 4. Run the deterministic Rules Engine
-    const output = recommendArchitecture(extractedInput);
+    // 4. Run the Generative Adaptation Engine
+    const output = await recommendArchitecture(extractedInput, prompt);
+
+    // Merge the AI usage from the adaptation step
+    const adaptationInputTokens = output.usage?.promptTokens || 0;
+    const adaptationOutputTokens = output.usage?.completionTokens || 0;
+    
+    const finalInputTokens = inputTokens + adaptationInputTokens;
+    const finalOutputTokens = outputTokens + adaptationOutputTokens;
+    const finalTotalCost = (finalInputTokens / 1000000) * 0.075 + (finalOutputTokens / 1000000) * 0.30;
 
     if (output.status === 'success') {
       // 5. Log the successful review to the database
       if (recordId) {
         await db.update(architectureReviews).set({
           status: 'success',
-          extractedDomains: sql`${JSON.stringify(extractedInput.archetypes.map(a => a.name))}::jsonb` as any,
+          extractedDomains: sql`${JSON.stringify((extractedInput.capabilities || []).map(a => a.name))}::jsonb` as any,
           architectureStyle: output.data.architectureStyle,
           topRisks: sql`${JSON.stringify(output.data.businessRisks.map(r => r.risk))}::jsonb` as any,
           blindSpots: sql`${JSON.stringify(output.data.domainBlindSpots || [])}::jsonb` as any,
           generationTimeMs: Date.now() - startTime,
-          inputTokens,
-          outputTokens,
-          totalCost: Number(totalCost) || 0,
+          inputTokens: finalInputTokens,
+          outputTokens: finalOutputTokens,
+          totalCost: Number(finalTotalCost) || 0,
           unknownTechnologies: sql`${JSON.stringify(extractedInput.unknownTechnologies || [])}::jsonb` as any,
           missingNiches: sql`${JSON.stringify(extractedInput.missingNiches || [])}::jsonb` as any,
           confidenceScore: extractedInput.confidenceScore || 0,
+          knowledgeVersion: 'v2.0.0', // Graph engine version
+          graphSchemaVersion: 'v1.0',
+          resolverVersion: 'v1.0',
+          activatedNodes: output.telemetry ? sql`${JSON.stringify(output.telemetry.activatedNodes)}::jsonb` as any : null,
+          suppressedNodes: output.telemetry ? sql`${JSON.stringify(output.telemetry.suppressedNodes)}::jsonb` as any : null,
+          conflicts: output.telemetry ? sql`${JSON.stringify((output.telemetry as any).decisionRecords || [])}::jsonb` as any : null,
+          insightPatches: output.telemetry ? sql`${JSON.stringify(output.telemetry.insightPatches || [])}::jsonb` as any : null,
           rawInput: isPrivate ? null : sql`${JSON.stringify({ ...extractedInput, brief: prompt })}::jsonb` as any,
           rawOutput: isPrivate ? null : sql`${JSON.stringify(output.data)}::jsonb` as any,
         }).where(eq(architectureReviews.id, recordId));
       }
-      return { ...output, reviewId: isPrivate ? undefined : recordId || undefined };
+      const { telemetry, ...clientOutput } = output as any;
+      return { ...clientOutput, reviewId: isPrivate ? undefined : recordId || undefined };
     }
 
-    return output;
+    const { telemetry, ...clientOutput } = output as any;
+    return clientOutput;
   } catch (error: any) {
     console.error('Error processing architecture request:', error);
     

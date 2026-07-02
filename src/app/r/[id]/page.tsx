@@ -70,7 +70,7 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="max-w-4xl mx-auto py-8">
-        <ReviewMemo data={data} inputArchetypes={inputArchetypes} />
+        <ReviewMemo data={data} inputCapabilities={inputArchetypes.map((a: any) => ({...a, source: 'llm'}))} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { ArchitectureInput, EngineResponse, StackComponent, DeferredDecision, ArchitectureDebt, ArchitectureChallenge, BusinessRisk, BlueprintCategory } from '../types';
 
 export function handleWeb3(input: ArchitectureInput): EngineResponse | null {
-  const isWeb3 = input.archetypes.some(a => a.name === 'web3_dapp') || 
+  const isWeb3 = (input.capabilities || []).some(a => a.name === 'web3_dapp') || 
     input.projectIdea.toLowerCase().match(/(crypto|blockchain|ethereum|solana|smart contract|nft|token|defi|dao|wallet|dapp)/);
 
   if (!isWeb3) {
