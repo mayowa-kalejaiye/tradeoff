@@ -39,8 +39,9 @@ export default function Image() {
           <div style={{ fontSize: '24px', color: '#666666', textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '20px', fontWeight: 'bold' }}>
             // ARCHITECTURE_REVIEW
           </div>
-          <div style={{ fontSize: '80px', fontWeight: 900, lineHeight: 1.0, color: '#000000', letterSpacing: '-3px', textTransform: 'uppercase' }}>
-            ENGINEERING JUDGMENT<br/>AT SCALE.
+          <div style={{ display: 'flex', flexDirection: 'column', fontSize: '80px', fontWeight: 900, lineHeight: 1.0, color: '#000000', letterSpacing: '-3px', textTransform: 'uppercase' }}>
+            <div style={{ display: 'flex' }}>ENGINEERING JUDGMENT</div>
+            <div style={{ display: 'flex' }}>AT SCALE.</div>
           </div>
         </div>
 
