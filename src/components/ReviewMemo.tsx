@@ -9,22 +9,34 @@ interface ReviewMemoProps {
   onExportMarkdown?: () => void;
 }
 
-export function ReviewMemo({ data, reviewId }: ReviewMemoProps) {
+export function ReviewMemo({ data, reviewId, onExportMarkdown }: ReviewMemoProps) {
   return (
-    <>
+    <div className="flex flex-col gap-8 w-full">
+      {/* Action Bar (Top) */}
+      {onExportMarkdown && (
+        <div className="flex justify-end w-full border-b-[2px] border-[#000000] pb-2">
+          <button 
+            onClick={onExportMarkdown}
+            className="font-mono text-[10px] sm:text-[12px] font-bold border-[2px] border-[#000000] px-4 py-2 uppercase tracking-widest bg-[#ffffff] hover:bg-[#000000] hover:text-[#ffffff] transition-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[14px]">download</span> EXPORT_MARKDOWN
+          </button>
+        </div>
+      )}
+
       {/* 1. Executive Summary */}
-      <div className="border-thick border-primary bg-surface-container-lowest relative z-10 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-0 w-full">
-        <div className="bg-primary text-on-primary font-label-caps text-[12px] px-unit py-unit border-b-thick border-primary flex items-center gap-unit uppercase">
-          <span className="font-code-md opacity-50">01.</span> Executive Summary
+      <div className="border-[2px] border-[#000000] bg-[#ffffff] relative z-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full flex flex-col">
+        <div className="bg-[#000000] text-[#ffffff] font-mono text-[10px] sm:text-[12px] font-bold px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
+          <span className="text-[#5d5f5f]">01.</span> EXECUTIVE_SUMMARY
         </div>
-        <div className="p-gutter border-b-thin border-primary">
-          <h3 className="font-headline-md text-[24px] font-bold uppercase tracking-tight">{data.architectureStyle}</h3>
+        <div className="p-6 md:p-8 border-b-[2px] border-[#000000] bg-[#f9f9f9]">
+          <h3 className="font-sans text-[24px] md:text-[32px] font-black uppercase tracking-tighter leading-tight break-words">{data.architectureStyle}</h3>
         </div>
-        <div className="p-gutter font-code-md text-[14px]">
-          <ul className="space-y-unit list-none m-0 p-0">
+        <div className="p-6 md:p-8 font-code-md text-[14px] md:text-[16px] text-[#000000] leading-relaxed">
+          <ul className="space-y-4 list-none m-0 p-0">
             {data.recommended[0]?.reasons.map((reason, i) => (
-              <li key={i} className="flex items-start gap-gutter">
-                <span className="text-primary font-bold">+</span>
+              <li key={i} className="flex items-start gap-4">
+                <span className="text-[#000000] font-bold mt-1 border-[1px] border-[#000000] w-4 h-4 flex items-center justify-center shrink-0 bg-[#00ff00]">+</span>
                 <span>{reason}</span>
               </li>
             ))}
@@ -34,19 +46,19 @@ export function ReviewMemo({ data, reviewId }: ReviewMemoProps) {
 
       {/* 2. Architecture Drivers */}
       {data.pressureMap && data.pressureMap.length > 0 && (
-        <div className="border-thick border-primary bg-surface-container-lowest relative z-10 w-full mt-margin-edge">
-          <div className="bg-primary text-on-primary font-label-caps text-[12px] px-unit py-unit border-b-thick border-primary flex items-center gap-unit uppercase">
-            <span className="font-code-md opacity-50">02.</span> Architecture Drivers
+        <div className="border-[2px] border-[#000000] bg-[#ffffff] relative z-10 w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
+            <span className="text-[#5d5f5f]">02.</span> ARCHITECTURE_DRIVERS
           </div>
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-0 bg-primary">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 bg-[#000000] border-b-[2px] border-[#000000]">
             {data.pressureMap.map((p, i) => (
-              <div key={i} className="bg-surface-container-lowest border-r-thin border-b-thin border-primary p-gutter flex flex-col justify-between aspect-[4/3] xl:aspect-square hover:bg-surface-variant transition-none">
-                <div className="font-label-caps text-[12px] text-secondary uppercase">{p.dimension}</div>
-                <div className="font-headline-lg text-[64px] leading-[0.9] font-black tracking-tighter mt-auto text-primary">
-                  {p.pressure}<span className="text-[24px] text-secondary">%</span>
+              <div key={i} className="bg-[#ffffff] border-r-[2px] border-b-[2px] border-[#000000] p-4 sm:p-6 flex flex-col justify-between aspect-square lg:aspect-auto lg:h-48 hover:bg-[#e8e8e8] transition-none group">
+                <div className="font-mono font-bold text-[10px] sm:text-[12px] text-[#5d5f5f] uppercase tracking-widest break-words leading-tight">{p.dimension}</div>
+                <div className="font-sans text-[48px] sm:text-[64px] leading-[0.9] font-black tracking-tighter mt-auto text-[#000000] group-hover:text-[#ba1a1a]">
+                  {p.pressure}<span className="text-[20px] sm:text-[24px] text-[#5d5f5f]">%</span>
                 </div>
                 {p.influencedDecisions && p.influencedDecisions.length > 0 && (
-                  <div className="font-code-md text-[10px] uppercase text-primary font-bold mt-1 truncate">
+                  <div className="font-mono font-bold text-[8px] sm:text-[10px] uppercase text-[#000000] mt-2 truncate bg-[#00ff00] px-1 border-[1px] border-[#000000] w-fit">
                     {p.influencedDecisions[0].replace(/_/g, ' ')}
                   </div>
                 )}
@@ -57,34 +69,34 @@ export function ReviewMemo({ data, reviewId }: ReviewMemoProps) {
       )}
 
       {/* Bottom Section Grid (Risk & Topology) */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-margin-edge relative z-10 mt-margin-edge w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10 w-full">
         
         {/* 3. Risk Analysis */}
         {data.businessRisks && data.businessRisks.length > 0 && (
-          <div className="border-thick border-primary bg-surface-container-lowest flex flex-col">
-            <div className="bg-primary text-on-primary font-label-caps text-[12px] px-unit py-unit border-b-thick border-primary flex justify-between items-center uppercase">
-              <div className="flex items-center gap-unit"><span className="font-code-md opacity-50">03.</span> Risk Analysis</div>
-              <div className="font-code-md text-[10px] hidden sm:block">INCIDENT ID: {reviewId || 'TRD-8910-XX'}</div>
+          <div className="border-[2px] border-[#000000] bg-[#ffffff] flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 uppercase tracking-widest">
+              <div className="flex items-center gap-2"><span className="text-[#5d5f5f]">03.</span> RISK_ANALYSIS</div>
+              <div className="text-[8px] sm:text-[10px] text-[#5d5f5f] bg-[#ffffff] px-2 py-0.5 border-[1px] border-[#5d5f5f] truncate max-w-full">INCIDENT_ID: {reviewId || 'TRD-8910-XX'}</div>
             </div>
-            <div className="p-gutter flex flex-col gap-gutter flex-1">
+            <div className="p-4 sm:p-6 flex flex-col gap-6 flex-1 bg-[#f9f9f9]">
               {data.businessRisks.map((risk, i) => (
-                <div key={i} className="border-thin border-primary flex flex-col bg-surface">
-                  <div className="p-unit border-b-thin border-primary flex items-center gap-unit bg-surface-variant overflow-hidden">
-                    <span className={`font-label-caps text-[12px] px-2 py-1 uppercase tracking-widest border-thick border-primary whitespace-nowrap shrink-0 ${risk.level.toUpperCase() === 'HIGH' || risk.level.toUpperCase() === 'CRITICAL' ? 'bg-error text-on-error' : 'bg-primary text-on-primary'}`}>
+                <div key={i} className="border-[2px] border-[#000000] flex flex-col bg-[#ffffff] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="p-3 border-b-[2px] border-[#000000] flex items-center gap-3 bg-[#e8e8e8] overflow-hidden">
+                    <span className={`font-mono text-[10px] font-bold px-2 py-1 uppercase tracking-widest border-[2px] border-[#000000] whitespace-nowrap shrink-0 ${risk.level.toUpperCase() === 'HIGH' || risk.level.toUpperCase() === 'CRITICAL' ? 'bg-[#ba1a1a] text-[#ffffff]' : 'bg-[#000000] text-[#ffffff]'}`}>
                       [SEV:{risk.level}]
                     </span>
-                    <span className="font-code-md text-[14px] font-bold uppercase truncate">{risk.risk}</span>
+                    <span className="font-code-md text-[12px] sm:text-[14px] font-bold uppercase truncate">{risk.risk}</span>
                   </div>
-                  <div className="p-unit font-code-md text-[12px] text-on-surface-variant leading-relaxed">
+                  <div className="p-4 font-code-md text-[12px] sm:text-[14px] text-[#000000] leading-relaxed">
                     {risk.reason}
                   </div>
                   {risk.trace?.patched && (
-                    <div className="mt-auto border-t-thin border-primary bg-surface-container-highest p-unit flex gap-unit items-start relative overflow-hidden group">
-                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--color-primary)_1px,_transparent_1px)] bg-[length:4px_4px]"></div>
-                      <span className="material-symbols-outlined text-[32px] text-primary relative z-10 group-hover:animate-spin">memory</span>
-                      <div className="relative z-10">
-                        <div className="font-label-caps text-[10px] font-bold uppercase mb-1 border-b-thin border-primary inline-block">AI Insight Generation</div>
-                        <p className="font-code-md text-[12px] leading-tight text-primary italic">"{risk.trace.reason}"</p>
+                    <div className="mt-auto border-t-[2px] border-[#000000] bg-[#000000] p-4 flex gap-4 items-start relative overflow-hidden group">
+                      <div className="absolute inset-0 opacity-20 blueprint-bg pointer-events-none"></div>
+                      <span className="material-symbols-outlined text-[24px] text-[#ffffff] relative z-10 group-hover:animate-spin">memory</span>
+                      <div className="relative z-10 text-[#ffffff]">
+                        <div className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1 border-b-[1px] border-[#ffffff] pb-1 inline-block">SYS_INSIGHT</div>
+                        <p className="font-code-md text-[12px] leading-tight italic mt-1">"{risk.trace.reason}"</p>
                       </div>
                     </div>
                   )}
@@ -96,44 +108,45 @@ export function ReviewMemo({ data, reviewId }: ReviewMemoProps) {
 
         {/* 4. System Topology */}
         {data.decisionCards && data.decisionCards.length > 0 && (
-          <div className="border-thick border-primary bg-surface-container-lowest flex flex-col">
-            <div className="bg-primary text-on-primary font-label-caps text-[12px] px-unit py-unit border-b-thick border-primary flex items-center gap-unit uppercase">
-              <span className="font-code-md opacity-50">04.</span> System Topology Constraints
+          <div className="border-[2px] border-[#000000] bg-[#ffffff] flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
+              <span className="text-[#5d5f5f]">04.</span> TOPOLOGY_CONSTRAINTS
             </div>
-            <div className="flex flex-col border-b-thin border-primary">
+            <div className="flex flex-col bg-[#f9f9f9]">
               {data.decisionCards.map((card, i) => (
-                <div key={i} className="border-b-thin border-primary last:border-b-0 flex flex-col group">
-                  <div className="p-unit border-b-thin border-primary bg-surface-variant flex justify-between items-center group-hover:bg-surface-dim transition-none">
-                    <span className="font-code-md text-[14px] font-bold uppercase flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px]">developer_board</span> {card.recommendation}
+                <div key={i} className="border-b-[2px] border-[#000000] last:border-b-0 flex flex-col group">
+                  <div className="p-4 border-b-[2px] border-[#000000] bg-[#e8e8e8] flex justify-between items-center group-hover:bg-[#ffffff] transition-none">
+                    <span className="font-code-md text-[12px] sm:text-[14px] font-bold uppercase flex items-center gap-2 truncate pr-2">
+                      <span className="material-symbols-outlined text-[18px] shrink-0">developer_board</span> 
+                      <span className="truncate">{card.recommendation}</span>
                     </span>
-                    <span className="font-label-caps text-[10px] border border-primary px-1 bg-surface-container-lowest shrink-0 hidden sm:block truncate ml-2">
+                    <span className="font-mono text-[8px] sm:text-[10px] border-[2px] border-[#000000] px-2 py-1 bg-[#ffffff] shrink-0 font-bold uppercase tracking-widest">
                       {card.systemGroup.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 divide-y-thin md:divide-y-0 md:divide-x-thin divide-primary font-code-md text-[11px] bg-surface-container-lowest">
+                  <div className="grid grid-cols-1 md:grid-cols-3 divide-y-[2px] md:divide-y-0 md:divide-x-[2px] divide-[#000000] font-code-md text-[10px] sm:text-[11px] bg-[#ffffff]">
                     
-                    <div className="p-unit flex flex-col justify-start">
-                      <span className="text-secondary uppercase mb-1 font-bold">Wins When:</span>
-                      <span>{card.winsWhen && card.winsWhen.length > 0 ? card.winsWhen[0] : card.rationale}</span>
+                    <div className="p-4 flex flex-col justify-start hover:bg-[#f9f9f9] transition-none">
+                      <span className="text-[#5d5f5f] uppercase mb-2 font-bold font-mono tracking-widest border-b-[1px] border-[#cfc4c5] pb-1">WINS WHEN:</span>
+                      <span className="leading-relaxed">{card.winsWhen && card.winsWhen.length > 0 ? card.winsWhen[0] : card.rationale}</span>
                     </div>
 
-                    <div className="p-unit flex flex-col justify-start bg-error-container text-on-error-container border-y-thin md:border-y-0 border-primary relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-1 opacity-10"><span className="material-symbols-outlined text-[48px]">warning</span></div>
-                      <span className="uppercase mb-1 font-bold flex items-center gap-1 relative z-10"><span className="material-symbols-outlined text-[12px]">warning</span> Scale Limits:</span>
-                      <span className="relative z-10">{card.scaleLimit ? card.scaleLimit.breaksFirst : 'Unknown ceiling constraints.'}</span>
+                    <div className="p-4 flex flex-col justify-start bg-error-container border-y-[2px] md:border-y-0 border-[#000000] relative overflow-hidden group/warn">
+                      <div className="absolute top-0 right-0 p-1 opacity-10 group-hover/warn:opacity-20 transition-none"><span className="material-symbols-outlined text-[48px] text-error">warning</span></div>
+                      <span className="text-error uppercase mb-2 font-bold font-mono tracking-widest border-b-[1px] border-error pb-1 flex items-center gap-1 relative z-10"><span className="material-symbols-outlined text-[14px]">warning</span> SCALE LIMITS:</span>
+                      <span className="relative z-10 leading-relaxed text-error font-bold">{card.scaleLimit ? card.scaleLimit.breaksFirst : 'UNKNOWN_CEILING.'}</span>
                     </div>
 
-                    <div className="p-unit flex flex-col justify-start text-secondary">
-                      <span className="uppercase mb-1 font-bold">Why Not:</span>
+                    <div className="p-4 flex flex-col justify-start hover:bg-[#f9f9f9] transition-none text-[#5d5f5f]">
+                      <span className="uppercase mb-2 font-bold font-mono tracking-widest border-b-[1px] border-[#cfc4c5] pb-1">WHY NOT:</span>
                       {card.alternatives && card.alternatives.length > 0 ? (
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-2">
                           {card.alternatives.map((alt, altIdx) => (
-                            <span key={altIdx} className="line-through">{alt.name}</span>
+                            <span key={altIdx} className="line-through leading-relaxed">{alt.name}</span>
                           ))}
                         </div>
                       ) : (
-                        <span className="line-through">{card.losesWhen && card.losesWhen.length > 0 ? card.losesWhen[0] : 'N/A'}</span>
+                        <span className="line-through leading-relaxed">{card.losesWhen && card.losesWhen.length > 0 ? card.losesWhen[0] : 'N/A'}</span>
                       )}
                     </div>
                   </div>
@@ -144,6 +157,6 @@ export function ReviewMemo({ data, reviewId }: ReviewMemoProps) {
         )}
 
       </div>
-    </>
+    </div>
   );
 }
