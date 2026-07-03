@@ -1,18 +1,8 @@
 import type { Metadata } from "next";
 
 export const revalidate = 86400; // Revalidate static layout daily (or on deploy)
-import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://tradeoff.pxxl.run'),
@@ -53,10 +43,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${outfit.variable} h-full antialiased`}
+      className="light h-full antialiased overscroll-none"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900 selection:bg-indigo-500/30 font-sans" suppressHydrationWarning>{children}</body>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;family=JetBrains+Mono:wght@500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+      </head>
+      <body className="text-on-background min-h-screen font-body-lg flex flex-col selection:bg-primary selection:text-white overscroll-none" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

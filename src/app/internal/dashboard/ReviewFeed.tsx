@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { RecentReview, markAsMisclassified } from './actions';
-import { Flag, ExternalLink, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export function ReviewFeed({ initialReviews }: { initialReviews: RecentReview[] }) {
@@ -23,92 +22,96 @@ export function ReviewFeed({ initialReviews }: { initialReviews: RecentReview[] 
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden mt-8">
-      <div className="p-6 border-b border-white/10 flex items-center gap-3">
-        <MessageSquare className="w-5 h-5 text-blue-400" />
-        <h3 className="text-lg font-medium text-white tracking-tight">Recent Reviews & Feedback Loop</h3>
+    <div className="bg-[#ffffff] border-[2px] border-[#000000] flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className="bg-[#000000] text-[#ffffff] font-mono text-[12px] px-4 py-3 border-b-[2px] border-[#000000] uppercase tracking-widest font-bold flex items-center gap-2">
+        <span className="material-symbols-outlined text-[16px]">forum</span>
+        RECENT_REVIEWS_AND_FEEDBACK
       </div>
       
       {reviews.length === 0 ? (
-        <div className="p-6 text-neutral-500 text-sm">No recent reviews found.</div>
+        <div className="p-6 text-[#5d5f5f] text-[12px] font-mono uppercase tracking-widest">No recent reviews found.</div>
       ) : (
-        <div className="divide-y divide-white/5">
+        <div className="flex flex-col bg-[#f9f9f9]">
           {reviews.map((review) => (
-            <div key={review.id} className="p-6 hover:bg-white/5 transition-colors group">
-              <div className="flex flex-col md:flex-row justify-between gap-6">
-                
-                {/* Left Side: Prompt & Metadata */}
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-neutral-500 font-mono">
-                      {new Date(review.createdAt).toLocaleString()}
-                    </span>
-                    <Link href={`/r/${review.id}`} target="_blank" className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                      View full report <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  </div>
-                  <div className="text-sm text-neutral-200 leading-relaxed bg-black/20 p-3 rounded-lg border border-white/5 italic">
+            <div key={review.id} className="p-6 border-b-[1px] border-[#cfc4c5] last:border-b-0 hover:bg-[#ffffff] transition-none group flex flex-col md:flex-row gap-8">
+              
+              {/* Left Side: Prompt & Metadata */}
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="text-[12px] text-[#5d5f5f] font-mono font-bold uppercase tracking-widest bg-[#e8e8e8] px-2 py-1 border-[1px] border-[#cfc4c5]">
+                    {new Date(review.createdAt).toLocaleString()}
+                  </span>
+                  <Link href={`/r/${review.id}`} target="_blank" className="text-[12px] font-mono text-[#000000] font-bold uppercase tracking-widest flex items-center gap-1 border-b-[2px] border-[#000000] hover:bg-[#000000] hover:text-[#ffffff] transition-none px-1">
+                    VIEW_REPORT <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                  </Link>
+                </div>
+                <div className="text-[14px] text-[#000000] font-code-md leading-relaxed p-4 border-[2px] border-[#000000] bg-[#ffffff] relative">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-[#000000]"></div>
+                  <span className="pl-2">
                     "{review.brief.length > 250 ? review.brief.substring(0, 250) + '...' : review.brief}"
-                  </div>
+                  </span>
                 </div>
-
-                {/* Right Side: AI Output & Actions */}
-                <div className="md:w-72 shrink-0 space-y-4">
-                  <div className="bg-black/30 p-4 rounded-lg border border-white/10">
-                    <div className="text-[10px] text-neutral-500 uppercase tracking-wider mb-1">Recommended Architecture</div>
-                    <div className="text-sm font-semibold text-white mb-3">{review.architectureStyle}</div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Confidence</div>
-                      <div className={`text-xs font-bold ${review.confidenceScore > 80 ? 'text-emerald-400' : review.confidenceScore > 50 ? 'text-amber-400' : 'text-red-400'}`}>
-                        {review.confidenceScore}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {review.isMisclassified ? (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-wider mb-2">
-                        <Flag className="w-3 h-3" /> Flagged
-                      </div>
-                      <p className="text-xs text-red-200/70">{review.feedbackNotes}</p>
-                    </div>
-                  ) : flaggingId === review.id ? (
-                    <div className="bg-neutral-900 border border-white/10 rounded-lg p-3 space-y-3">
-                      <textarea
-                        autoFocus
-                        placeholder="What did the AI get wrong?"
-                        className="w-full bg-black/50 border border-white/10 rounded p-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-blue-500"
-                        rows={3}
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                      />
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => submitFlag(review.id)}
-                          className="flex-1 bg-red-500/20 text-red-400 text-xs font-bold py-1.5 rounded hover:bg-red-500/30 transition-colors"
-                        >
-                          Submit
-                        </button>
-                        <button 
-                          onClick={() => { setFlaggingId(null); setNotes(''); }}
-                          className="flex-1 bg-white/5 text-neutral-400 text-xs font-bold py-1.5 rounded hover:bg-white/10 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => setFlaggingId(review.id)}
-                      className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-white/10 text-xs font-bold text-neutral-400 hover:bg-white/5 hover:text-red-400 hover:border-red-500/30 transition-all"
-                    >
-                      <Flag className="w-3 h-3" /> Flag Misclassification
-                    </button>
-                  )}
-                </div>
-
               </div>
+
+              {/* Right Side: AI Output & Actions */}
+              <div className="md:w-80 shrink-0 space-y-4">
+                <div className="bg-[#ffffff] p-4 border-[2px] border-[#000000]">
+                  <div className="text-[10px] font-mono text-[#5d5f5f] uppercase tracking-widest font-bold mb-1 border-b-[1px] border-[#cfc4c5] pb-1">REC_ARCH</div>
+                  <div className="text-[16px] font-sans font-black text-[#000000] mb-4 uppercase">{review.architectureStyle}</div>
+                  
+                  <div className="flex items-center justify-between border-t-[1px] border-[#cfc4c5] pt-2">
+                    <div className="text-[10px] font-mono text-[#5d5f5f] uppercase tracking-widest font-bold">CONFIDENCE</div>
+                    <div className={`text-[12px] font-mono font-bold px-2 py-1 border-[1px] ${review.confidenceScore > 80 ? 'bg-[#00ff00] border-[#000000] text-[#000000]' : review.confidenceScore > 50 ? 'bg-amber-400 border-[#000000] text-[#000000]' : 'bg-error text-on-error border-error'}`}>
+                      {review.confidenceScore}%
+                    </div>
+                  </div>
+                </div>
+
+                {review.isMisclassified ? (
+                  <div className="bg-error-container border-[2px] border-error p-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10">
+                      <span className="material-symbols-outlined text-[48px] text-error">flag</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-error text-[12px] font-mono font-bold uppercase tracking-widest mb-2 relative z-10 border-b-[1px] border-error pb-1">
+                      <span className="material-symbols-outlined text-[14px]">flag</span> FLAGGED
+                    </div>
+                    <p className="text-[12px] font-code-md text-error relative z-10 font-bold">{review.feedbackNotes}</p>
+                  </div>
+                ) : flaggingId === review.id ? (
+                  <div className="bg-[#e8e8e8] border-[2px] border-[#000000] p-4 space-y-3">
+                    <textarea
+                      autoFocus
+                      placeholder="WHAT DID THE SYSTEM GET WRONG?"
+                      className="w-full bg-[#ffffff] border-[2px] border-[#000000] p-3 text-[12px] font-code-md text-[#000000] placeholder:text-[#5d5f5f] focus:outline-none focus:ring-0 resize-none rounded-none uppercase"
+                      rows={3}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                    <div className="flex gap-2 font-mono text-[12px] font-bold">
+                      <button 
+                        onClick={() => submitFlag(review.id)}
+                        className="flex-1 bg-[#000000] text-[#ffffff] py-2 uppercase border-[2px] border-[#000000] hover:bg-[#ffffff] hover:text-[#000000] transition-none"
+                      >
+                        SUBMIT
+                      </button>
+                      <button 
+                        onClick={() => { setFlaggingId(null); setNotes(''); }}
+                        className="flex-1 bg-[#ffffff] text-[#000000] py-2 uppercase border-[2px] border-[#000000] hover:bg-[#e8e8e8] transition-none"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setFlaggingId(review.id)}
+                    className="w-full flex items-center justify-center gap-2 py-3 border-[2px] border-[#000000] bg-[#ffffff] text-[10px] font-mono font-bold text-[#000000] uppercase tracking-widest hover:bg-[#000000] hover:text-[#ffffff] transition-none"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">flag</span> FLAG_MISCLASSIFICATION
+                  </button>
+                )}
+              </div>
+
             </div>
           ))}
         </div>

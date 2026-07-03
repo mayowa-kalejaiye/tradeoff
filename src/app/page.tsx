@@ -1,496 +1,379 @@
 'use client';
 
-import { useState, useTransition, useEffect, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
-import { processArchitectureRequest, getReviewInputById } from './actions';
-import { EngineResponse } from '@/engine/types';
-import { ReviewMemo } from '@/components/ReviewMemo';
-import { 
-  Terminal, Server, Layers, Cpu, Database, Cloud, 
-  CheckCircle2, XCircle, AlertTriangle, ChevronRight, Zap,
-  DollarSign, Activity, HelpCircle, MessagesSquare, FileText,
-  Search, Bell, User, LayoutTemplate, Download, PanelLeftClose, PanelLeft
-} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
-export default function Home() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-50 flex items-center justify-center"><Loader className="w-6 h-6 text-zinc-400 animate-spin" /></div>}>
-      <HomeEditor />
-    </Suspense>
-  );
-}
+export default function LandingPage() {
+  const currentYear = new Date().getFullYear();
+  // Using a static ISO string for initial render to prevent hydration mismatch, 
+  // but it can be updated on client if strictly needed. I'll just use a recent date.
+  const lastSync = new Date().toISOString().split('T')[0] + 'T14:30:00Z';
 
-function HomeEditor() {
-  const searchParams = useSearchParams();
-  const remixId = searchParams.get('remix');
-
-  const [prompt, setPrompt] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<EngineResponse | null>(null);
-  const [error, setError] = useState('');
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
-  const isOverLimit = wordCount > 150;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    if (remixId) {
-      getReviewInputById(remixId).then(brief => {
-        if (brief) {
-          setPrompt(brief);
-        }
-      }).catch(console.error);
-    }
-  }, [remixId]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim() || isOverLimit) return;
-
-    setError('');
-    setResult(null);
-
-    startTransition(async () => {
-      try {
-        const output = await processArchitectureRequest(prompt, isPrivate);
-        if (output.status === 'error') {
-          setError(output.message);
-        } else {
-          setResult(output);
-        }
-      } catch (err: any) {
-        setError(err.message || 'An error occurred.');
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+        setIsNavVisible(false);
+      } else {
+        setIsNavVisible(true);
       }
-    });
-  };
+      lastScrollY.current = currentScrollY;
+    };
 
-  const handleRetryWithAnswers = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (result?.status !== 'uncertainty') return;
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    const answerText = Object.entries(answers)
-      .filter(([_, ans]) => ans.trim() !== '')
-      .map(([index, ans]) => `Q: ${result.questions[parseInt(index)]}\nA: ${ans}`)
-      .join('\n\n');
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handleFocus = () => {
+        textarea.parentElement?.parentElement?.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface');
+    };
+    const handleBlur = () => {
+        textarea.parentElement?.parentElement?.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface');
+    };
+
+    textarea.addEventListener('focus', handleFocus);
+    textarea.addEventListener('blur', handleBlur);
+
+    const placeholder = "We are building an ultra-low latency crypto trading bot...";
+    let i = 0;
+    textarea.placeholder = "";
     
-    if (!answerText) return;
-
-    const newPrompt = prompt + '\n\n=== CLARIFICATIONS ===\n' + answerText;
-    setPrompt(newPrompt);
-    setAnswers({});
-    setError('');
-    setResult(null);
+    let timeoutId: NodeJS.Timeout;
     
-    startTransition(async () => {
-      try {
-        const output = await processArchitectureRequest(newPrompt, isPrivate);
-        if (output.status === 'error') {
-          setError(output.message);
-        } else {
-          setResult(output);
+    function typeWriter() {
+        if (i < placeholder.length) {
+            if (textarea) textarea.placeholder += placeholder.charAt(i);
+            i++;
+            timeoutId = setTimeout(typeWriter, 40);
         }
-      } catch (err: any) {
-        setError(err.message || 'An error occurred.');
-      }
-    });
-  };
-
-  const handleExport = () => {
-    if (result?.status !== 'success') return;
-    const data = result.data;
-    
-    const md: string[] = [];
-    md.push(`# Architecture Review Memo`);
-    md.push(`\n**Project Brief:**\n> ${prompt.split('\n').join('\n> ')}\n`);
-    md.push(`\n## Layer 1: Core Architecture`);
-    md.push(`### Recommended Architecture: ${data.architectureStyle}`);
-    
-    if (data.recommended[0]?.reasons) {
-      md.push(`\n### Primary Reasoning`);
-      data.recommended[0].reasons.forEach((r: string) => md.push(`- ${r}`));
-    }
-
-    if (data.stack?.length) {
-      md.push(`\n### Implementation Overview`);
-      md.push(`**Core Stack:**`);
-      data.stack.forEach((s: any) => md.push(`- ${s.name} (${s.category})`));
-    }
-
-    if (data.deployment?.length) {
-      md.push(`\n**Target Deployment:**`);
-      data.deployment.forEach((d: string) => md.push(`- ${d}`));
-    }
-
-    if (data.operatingCostDrivers?.length) {
-      md.push(`\n**Estimated Operating Cost Drivers:**`);
-      data.operatingCostDrivers.forEach((c: string) => md.push(`- ${c}`));
-    }
-
-    if (data.failureModes?.length) {
-      md.push(`\n### Failure Modes`);
-      data.failureModes.forEach((f: any) => {
-        md.push(`• **${f.component}**`);
-        md.push(`→ ${f.impact}\n`);
-      });
-    }
-
-    md.push(`\n## Layer 2: Domain-Specific Intelligence`);
-
-    if (data.domainBlindSpots?.length) {
-      md.push(`\n### Domain Blind Spots`);
-      data.domainBlindSpots.forEach((b: string) => md.push(`- ${b}`));
     }
     
-    if (data.businessRisks?.length) {
-      md.push(`\n### Existential Business Risks`);
-      data.businessRisks.forEach((r: any) => {
-        md.push(`**${r.risk}** (Severity: ${r.level}, Likelihood: ${r.likelihood})`);
-        md.push(`${r.reason}\n`);
-      });
-    }
+    // Start typing effect with slight delay to ensure fonts are loaded
+    const initialTimeoutId = setTimeout(typeWriter, 500);
 
-    if (data.domainConstraints?.length) {
-      md.push(`\n### Hard Domain Constraints`);
-      data.domainConstraints.forEach((c: string) => md.push(`- ${c}`));
-    }
-
-    if (data.coreValidationQuestions?.length) {
-      md.push(`\n### What We Would Validate First`);
-      data.coreValidationQuestions.forEach((q: string) => md.push(`- ${q}`));
-    }
-
-    if (data.criticalUnknowns?.length) {
-      md.push(`\n### Critical Unknowns`);
-      data.criticalUnknowns.forEach((q: string) => md.push(`- ${q}`));
-    }
-
-    if (data.strategicAdvantages?.length) {
-      md.push(`\n### Strategic Advantages`);
-      data.strategicAdvantages.forEach((a: string) => md.push(`- ${a}`));
-    }
-
-    md.push(`\n## Layer 3: Architectural Nuance`);
-
-    if (data.deferredDecisions?.length) {
-      md.push(`\n### Intentionally Deferred`);
-      data.deferredDecisions.forEach((d: any) => {
-        md.push(`**${d.name}**`);
-        md.push(`${d.reason}\n`);
-      });
-    }
-
-    if (data.architectureDebt?.length) {
-      md.push(`\n### Accepted Debt`);
-      data.architectureDebt.forEach((d: any) => {
-        md.push(`**${d.debt}**`);
-        md.push(`${d.reason}\n`);
-      });
-    }
-
-    if (data.assumptions?.length) {
-      md.push(`\n### Core Assumptions`);
-      data.assumptions.forEach((a: string) => md.push(`- ${a}`));
-    }
-    if (data.assumptionRisk) {
-      md.push(`\n**Risk Analysis (${data.assumptionRisk.level}):** ${data.assumptionRisk.reason}`);
-    }
-
-    if (data.nonNegotiables?.length) {
-      md.push(`\n### Non-Negotiable Infrastructure`);
-      data.nonNegotiables.forEach((c: string) => md.push(`- ${c}`));
-    }
-
-    const blob = new Blob([md.join('\n')], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `architecture-review.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
+    return () => {
+      textarea.removeEventListener('focus', handleFocus);
+      textarea.removeEventListener('blur', handleBlur);
+      clearTimeout(timeoutId);
+      clearTimeout(initialTimeoutId);
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-indigo-500/20">
-      
-      {/* Top Navbar */}
-      <nav className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 shrink-0 z-20 sticky top-0">
+    <div className="flex-grow flex flex-col w-full">
+      {/* TopAppBar */}
+      <header className={`w-full top-0 sticky z-50 bg-white border-b-thick border-primary flex justify-between items-center px-margin-edge h-20 max-w-full transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-3xl" data-icon="architecture">architecture</span>
+          <h1 className="font-headline-md text-[28px] tracking-tighter font-black text-primary uppercase mt-1">TRADEOFF</h1>
+        </div>
         <div className="flex items-center gap-6">
-          <button 
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-            className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors -ml-2"
-            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isSidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center shadow-sm">
-              <Layers className="w-4 h-4 text-white" />
+          <div className="font-label-caps text-[10px] text-outline hidden md:block">SYS.REV.06 // ACTIVE</div>
+          <Link href="/app" className="font-label-caps text-[12px] border-thick border-primary px-6 py-2 hover:bg-primary hover:text-white active:scale-100 transition-colors uppercase bg-white flex items-center gap-2">
+            Review <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-grow flex flex-col w-full">
+        {/* Hero Section */}
+        <section className="px-margin-edge py-24 border-b-thick border-primary bg-transparent relative">
+          <div className="registration-mark bottom-0 right-margin-edge translate-y-[1px]"></div>
+          <div className="registration-mark bottom-0 left-margin-edge translate-y-[1px]"></div>
+          <div className="meta-tag left-4 top-12">DOC_ID: TRD-MN-01</div>
+          <div className="meta-tag right-4 top-12">PAGE: 01/04</div>
+          <div className="max-w-full relative z-10">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
+              <div className="font-label-caps text-[11px] text-primary border-thick border-primary px-2 py-1 bg-white whitespace-nowrap">[SYSTEM_STATUS: ACTIVE]</div>
+              <div className="font-label-caps text-[11px] text-outline whitespace-nowrap">|| v6.0.2-STABLE</div>
+              <div className="flex-grow border-b border-dashed border-outline-variant h-px opacity-50 min-w-[20px]"></div>
             </div>
-            <span className="font-bold text-sm tracking-tight text-zinc-900">AI Architect</span>
+            <div className="overflow-hidden mb-10 pb-2">
+              <motion.h2 
+                initial={{ y: '100%' }} 
+                animate={{ y: 0 }} 
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} 
+                className="font-headline-lg text-[40px] md:text-[64px] uppercase tracking-tighter font-black max-w-4xl text-primary leading-none"
+              >
+                ENGINEERING JUDGMENT AT SCALE.
+              </motion.h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+              <div className="md:col-span-8 overflow-hidden">
+                <motion.p 
+                  initial={{ y: '100%' }} 
+                  animate={{ y: 0 }} 
+                  transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }} 
+                  className="font-body-lg text-secondary max-w-2xl border-l-thick border-primary pl-6 py-2 text-lg leading-relaxed"
+                >
+                  Tradeoff is your virtual Staff Engineer. Evaluate architecture, expose risks, and avoid $100k mistakes before writing a single line of code.
+                </motion.p>
+              </div>
+              <div className="md:col-span-4 flex items-end justify-end hidden md:flex">
+                <div className="font-code-md text-[10px] text-outline text-right uppercase">
+                  LAST_SYNC: {lastSync}<br />
+                  TARGET: ARCHITECTURE_REVIEW
+                </div>
+              </div>
+            </div>
+            <Link href="/app" className="w-full md:w-max bg-primary text-white font-headline-md text-[28px] font-black px-10 py-6 hover:bg-transparent hover:text-primary border-thick border-primary transition-colors uppercase flex md:inline-flex items-center justify-center gap-4 group">
+              RUN ARCHITECTURE REVIEW <span className="material-symbols-outlined font-black transform group-hover:translate-x-2 transition-transform">arrow_forward</span>
+            </Link>
           </div>
+        </section>
+
+        {/* Input Stream Section */}
+        <section className="px-margin-edge py-24 border-b-thick border-primary bg-surface relative blueprint-bg">
+          <div className="registration-mark top-0 right-margin-edge translate-y-[-1px]"></div>
+          <div className="registration-mark bottom-0 left-margin-edge translate-y-[1px]"></div>
+          <div className="meta-tag left-4 top-12">SEC: INPUT_STREAM</div>
+          <div className="meta-tag right-4 top-12">PAGE: 02/04</div>
+          <div className="max-w-4xl mx-auto">
+            <div className="border-thick border-primary p-0 flex flex-col bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="border-b-thick border-primary bg-primary text-white px-6 py-4 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <span className="w-3 h-3 bg-[#00ff00] border border-white"></span>
+                  <span className="font-label-caps text-sm tracking-widest">INPUT_STREAM</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="font-code-md text-[10px] opacity-70">PORT: 8080</span>
+                  <span className="material-symbols-outlined text-lg" data-icon="terminal">terminal</span>
+                </div>
+              </div>
+              <div className="p-8 md:p-12 relative">
+                <div className="absolute left-8 top-12 bottom-12 w-px bg-outline-variant opacity-30"></div>
+                <textarea 
+                  ref={textareaRef}
+                  className="w-full h-48 bg-transparent border-none focus:ring-0 font-code-md text-base text-primary resize-none placeholder:text-outline-variant pl-6 leading-relaxed outline-none" 
+                  placeholder="We are building an ultra-low latency crypto trading bot..."
+                ></textarea>
+                <div className="mt-8 flex justify-between items-end border-t-thick border-primary pt-6">
+                  <div className="font-code-md text-[10px] text-outline uppercase hidden sm:block">Awaiting input...</div>
+                  <Link href="/app" className="font-label-caps text-[12px] flex items-center gap-3 hover:bg-primary hover:text-white border-thick border-primary px-8 py-4 transition-colors bg-white group">
+                    SUBMIT <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" data-icon="keyboard_return">keyboard_return</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Output (Bento Grid) */}
+        <section className="px-margin-edge py-24 border-b-thick border-primary bg-white relative">
+          <div className="meta-tag left-4 top-12">SEC: ANALYSIS_OUT</div>
+          <div className="meta-tag right-4 top-12">PAGE: 03/04</div>
           
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-zinc-100 rounded-md cursor-pointer transition-colors border border-transparent hover:border-zinc-200">
-            <LayoutTemplate className="w-4 h-4 text-zinc-500" />
-            <span className="text-sm font-medium text-zinc-600">Personal Workspace</span>
-            <span className="bg-zinc-200 text-zinc-500 text-[10px] px-1.5 py-0.5 rounded font-mono ml-2 border border-zinc-300 shadow-sm">PRO</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex relative group">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Search past reviews..." 
-              className="w-64 h-8 pl-9 pr-3 bg-zinc-50 border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-300 transition-shadow"
-            />
-          </div>
-          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 border border-zinc-200 shadow-sm overflow-hidden flex items-center justify-center text-white text-xs font-bold ring-2 ring-white cursor-pointer hover:opacity-90 transition-opacity">
-            JS
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Split Layout */}
-      <div className="flex flex-col lg:flex-row flex-grow lg:overflow-hidden lg:h-[calc(100vh-3.5rem)]">
-        
-        {/* LEFT PANE: The Brief (Subtle Background) */}
-        <div className={`${isSidebarCollapsed ? 'hidden' : 'flex flex-col'} lg:w-1/3 bg-zinc-50 lg:border-r border-zinc-200 lg:h-full lg:overflow-y-auto p-6 lg:p-10 shrink-0`}>
-          <header className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">New Architecture Review</h1>
-            <p className="text-zinc-500 text-sm leading-relaxed">
-              Describe your constraints. The engine will evaluate tradeoffs and return a formal technical brief.
-            </p>
-          </header>
-
-          <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
-            <div className="flex flex-col flex-grow mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Project Brief</label>
-                <span className={`text-xs font-medium ${isOverLimit ? 'text-red-500 font-bold' : 'text-zinc-400'}`}>
-                  {wordCount} / 150 words
-                </span>
+          <div className="mb-24">
+            <div className="flex items-center justify-between mb-8">
+              <div className="font-label-caps text-sm flex items-center gap-3 text-primary border-thick border-primary px-3 py-1 inline-flex bg-surface">
+                <span className="w-2 h-2 bg-primary block"></span> [01] EXECUTIVE_SUMMARY
               </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                maxLength={1000}
-                placeholder="e.g., We're building an internal HR platform. 50 engineers. Expected users: 3,000 employees. Priority: reliability..."
-                className={`w-full flex-grow p-4 bg-white border shadow-sm rounded-lg focus:ring-1 transition-all resize-none outline-none text-zinc-900 placeholder-zinc-400 text-sm leading-relaxed min-h-[200px] ${
-                  isOverLimit ? 'border-red-300 focus:border-red-400 focus:ring-red-400' : 'border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400'
-                }`}
-                spellCheck="false"
-              />
-              <div className="mt-3 flex items-start gap-2">
-                <input 
-                  type="checkbox" 
-                  id="isPrivate" 
-                  checked={isPrivate}
-                  onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="mt-0.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" 
-                />
-                <div className="flex flex-col">
-                  <label htmlFor="isPrivate" className="text-xs font-medium text-zinc-700 cursor-pointer">
-                    Keep my brief private (disables public sharing link)
-                  </label>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">
-                    We do not train our AI models on your startup ideas.
-                  </p>
+              <div className="font-code-md text-[10px] text-outline uppercase">Generated in 1.42s</div>
+            </div>
+            <h3 className="font-headline-lg-mobile text-[40px] uppercase mb-10 font-black tracking-tighter text-primary">EVENT-DRIVEN MICROSERVICES</h3>
+            <div className="space-y-6 border-l-thick border-primary pl-8 ml-2">
+              <div className="flex items-start gap-6">
+                <span className="font-code-md text-lg font-bold text-primary mt-0.5">+</span>
+                <span className="font-code-md text-base text-primary">Decoupled scaling of ingestion vs. execution nodes.</span>
+              </div>
+              <div className="flex items-start gap-6">
+                <span className="font-code-md text-lg font-bold text-primary mt-0.5">+</span>
+                <span className="font-code-md text-base text-primary">Eventual consistency acceptable for non-critical audit trails.</span>
+              </div>
+              <div className="flex items-start gap-6">
+                <span className="font-code-md text-lg font-bold text-primary mt-0.5">+</span>
+                <span className="font-code-md text-base text-primary">Backpressure handling via distributed message buffers.</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t-thick border-b-thick border-primary py-20 mb-24 blueprint-bg-dense bg-surface -mx-margin-edge px-margin-edge relative">
+            <div className="registration-mark top-0 left-1/2 translate-x-[-50%] translate-y-[-1px]"></div>
+            <div className="registration-mark bottom-0 left-1/2 translate-x-[-50%] translate-y-[1px]"></div>
+            <div className="font-label-caps text-sm mb-10 text-primary bg-white inline-block px-3 py-1 border-thick border-primary">[02] ARCHITECTURE_DRIVERS (PRESSURE_MAP)</div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-0 relative z-10 bg-white border-thick border-primary shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="border-b-thick md:border-b-0 md:border-r-thick border-primary p-8 hover:bg-surface transition-colors">
+                <div className="font-headline-lg text-[64px] font-black tracking-tighter mb-4 text-primary leading-none">100<span className="text-3xl text-outline-variant">%</span></div>
+                <div className="font-label-caps text-xs text-primary uppercase font-bold">RELIABILITY</div>
+                <div className="font-code-md text-[10px] text-outline mt-2">Forced Redundancy</div>
+              </div>
+              <div className="border-b-thick md:border-b-0 md:border-r-thick border-primary p-8 hover:bg-surface transition-colors">
+                <div className="font-headline-lg text-[64px] font-black tracking-tighter mb-4 text-primary leading-none">95<span className="text-3xl text-outline-variant">%</span></div>
+                <div className="font-label-caps text-xs text-primary uppercase font-bold">LATENCY</div>
+                <div className="font-code-md text-[10px] text-outline mt-2">Edge Processing</div>
+              </div>
+              <div className="border-b-thick border-r-thick md:border-b-0 border-primary p-8 hover:bg-surface transition-colors bg-surface-container-low">
+                <div className="font-headline-lg text-[64px] font-black tracking-tighter mb-4 text-outline leading-none">40<span className="text-3xl text-outline-variant">%</span></div>
+                <div className="font-label-caps text-xs text-secondary uppercase font-bold">COST</div>
+                <div className="font-code-md text-[10px] text-outline mt-2">High-Compute Tradeoff</div>
+              </div>
+              <div className="p-8 hover:bg-surface transition-colors">
+                <div className="font-headline-lg text-[64px] font-black tracking-tighter mb-4 text-primary leading-none">80<span className="text-3xl text-outline-variant">%</span></div>
+                <div className="font-label-caps text-xs text-primary uppercase font-bold">VELOCITY</div>
+                <div className="font-code-md text-[10px] text-outline mt-2">Modular Schema</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-24">
+            <div className="flex items-center justify-between mb-10">
+              <div className="font-label-caps text-sm flex items-center gap-3 text-primary border-thick border-primary px-3 py-1 inline-flex bg-surface">
+                <span>[03] RISK_ANALYSIS (INCIDENT_REPORT)</span>
+              </div>
+              <div className="font-code-md text-[10px] text-primary border border-primary px-2 py-1 bg-surface">ID:TRD-8910-XX | TS:1698243001</div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+              <div className="border-thick border-primary p-10 relative bg-white">
+                <div className="absolute -top-[2px] left-10 w-24 h-thick bg-white"></div>
+                <div className="absolute top-0 left-0 w-2 h-full bg-error"></div>
+                <div className="flex gap-3 mb-8">
+                  <div className="bg-error text-white px-3 py-1 font-label-caps text-xs border-thick border-error tracking-wider">[SEV:CRITICAL]</div>
+                  <div className="border-thick border-primary px-3 py-1 font-label-caps text-xs tracking-wider text-primary">[TYPE:PARTITION]</div>
+                </div>
+                <p className="font-code-md text-lg text-primary font-bold leading-relaxed">Network split between Region-A and Region-B causes 500ms drift in state synchronization.</p>
+              </div>
+              
+              <div className="bg-surface border-thick border-primary p-10 blueprint-bg-dense relative">
+                <div className="absolute top-4 right-4 font-code-md text-[10px] text-outline">AUTO-GENERATED</div>
+                <div className="font-label-caps text-sm mb-6 flex items-center gap-2 text-primary bg-white inline-flex px-3 py-1.5 border-thick border-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <span className="material-symbols-outlined text-[18px]" data-icon="psychology">psychology</span> AI_INSIGHT
+                </div>
+                <p className="font-code-md text-base italic bg-white p-6 border-thick border-primary text-primary leading-relaxed">"The current topology prioritizes availability over consistency. In a high-volatility event, this may lead to double-spend risks on the ledger edge."</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="font-label-caps text-sm mb-10 text-primary border-thick border-primary px-3 py-1 inline-flex bg-surface">[04] SYSTEM_TOPOLOGY (DECISION_CARDS)</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+              <div className="border-thick border-primary flex flex-col bg-white">
+                <div className="bg-primary text-white px-8 py-5 font-label-caps text-sm tracking-widest flex justify-between items-center border-b-thick border-primary">
+                  <span>POSTGRESQL (PERSISTENCE)</span>
+                  <span className="material-symbols-outlined text-[20px]">storage</span>
+                </div>
+                <div className="p-10 flex-grow flex flex-col gap-10">
+                  <div className="space-y-6">
+                    <div className="font-code-md text-base text-primary font-bold flex items-start"><span className="mr-4 text-outline mt-0.5">&gt;</span> Wins When: ACID compliance required</div>
+                    <div className="font-code-md text-base text-secondary flex items-start"><span className="mr-4 text-outline mt-0.5">&gt;</span> Loses When: Write-heavy global scaling</div>
+                  </div>
+                  <div className="border-thick border-error mt-auto">
+                    <div className="bg-error text-white px-4 py-2 font-label-caps text-xs flex justify-between items-center border-b-thick border-error tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">warning</span> SCALE_LIMITS
+                      </div>
+                      <span className="font-code-md text-[10px]">ERR_C_15K</span>
+                    </div>
+                    <div className="p-5 bg-[#fff0f0] font-code-md text-sm text-error font-bold leading-relaxed">
+                      Max connections reached at 15k concurrent users.
+                    </div>
+                  </div>
+                  <div className="border-t border-dashed border-outline-variant pt-6">
+                    <div className="font-label-caps text-[10px] text-outline mb-3 tracking-widest">WHY NOT?</div>
+                    <div className="font-code-md text-sm text-primary"><span className="strikethrough-clean">MongoDB</span> (Schema flexibility not worth data integrity risk)</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-thick border-primary flex flex-col bg-white">
+                <div className="bg-primary text-white px-8 py-5 font-label-caps text-sm tracking-widest flex justify-between items-center border-b-thick border-primary">
+                  <span>EDGE MQTT (MESSAGING)</span>
+                  <span className="material-symbols-outlined text-[20px]">router</span>
+                </div>
+                <div className="p-10 flex-grow flex flex-col gap-10">
+                  <div className="space-y-6">
+                    <div className="font-code-md text-base text-primary font-bold flex items-start"><span className="mr-4 text-outline mt-0.5">&gt;</span> Wins When: Low-bandwidth IoT telemetry</div>
+                    <div className="font-code-md text-base text-secondary flex items-start"><span className="mr-4 text-outline mt-0.5">&gt;</span> Loses When: Large payload transfers</div>
+                  </div>
+                  <div className="border-thick border-error mt-auto">
+                    <div className="bg-error text-white px-4 py-2 font-label-caps text-xs flex justify-between items-center border-b-thick border-error tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">warning</span> SCALE_LIMITS
+                      </div>
+                      <span className="font-code-md text-[10px]">ERR_M_1M</span>
+                    </div>
+                    <div className="p-5 bg-[#fff0f0] font-code-md text-sm text-error font-bold leading-relaxed">
+                      Central MQTT broker CPU saturation at 1M topics.
+                    </div>
+                  </div>
+                  <div className="border-t border-dashed border-outline-variant pt-6">
+                    <div className="font-label-caps text-[10px] text-outline mb-3 tracking-widest">WHY NOT?</div>
+                    <div className="font-code-md text-sm text-primary"><span className="strikethrough-clean">Redis Pub/Sub</span> (Lack of persistent session state)</div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <button
-              type="submit"
-              onClick={(e) => {
-                if (isPending || !prompt.trim() || isOverLimit) {
-                  e.preventDefault();
-                }
-              }}
-              className={`w-full flex items-center justify-center gap-2 h-10 rounded-md font-medium transition-colors text-sm shadow-sm ${
-                isPending || !prompt.trim() || isOverLimit
-                  ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed opacity-50'
-                  : 'bg-zinc-900 text-white hover:bg-zinc-800'
-              }`}
-            >
-              {isPending ? (
-                <span className="flex items-center gap-2">
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-                    <Loader className="w-4 h-4" />
-                  </motion.div>
-                  Running Review...
-                </span>
-              ) : isOverLimit ? (
-                <>
-                  <AlertTriangle className="w-4 h-4" />
-                  Word Limit Exceeded
-                </>
-              ) : (
-                <>
-                  <FileText className="w-4 h-4" />
-                  Run Architecture Review
-                </>
-              )}
-            </button>
-          </form>
+          </div>
+        </section>
+
+        {/* Authority Section */}
+        <section className="border-b-thick border-primary bg-white overflow-hidden relative">
+          <div className="registration-mark top-0 left-1/2 translate-x-[-50%] translate-y-[-1px]"></div>
+          <div className="grid grid-cols-2 xl:grid-cols-4 border-l-thick border-primary">
+            <div className="border-r-thick border-b-thick border-primary p-4 sm:p-8 xl:p-16 flex flex-col items-center justify-center grayscale hover:grayscale-0 transition-all bg-white relative hover:bg-surface text-center">
+              <div className="registration-mark bottom-0 right-0 translate-x-[1px] translate-y-[1px]"></div>
+              <div className="font-label-caps text-[8px] sm:text-[10px] text-outline mb-2 sm:mb-6 tracking-widest">COGNITIVE_ENGINE</div>
+              <div className="font-headline-md text-base sm:text-xl xl:text-3xl tracking-tighter font-black text-primary break-words">SYNTHETIC_STAFF</div>
+            </div>
+            <div className="border-r-thick border-b-thick border-primary p-4 sm:p-8 xl:p-16 flex flex-col items-center justify-center grayscale hover:grayscale-0 transition-all bg-white relative hover:bg-surface text-center">
+              <div className="registration-mark bottom-0 right-0 translate-x-[1px] translate-y-[1px]"></div>
+              <div className="font-label-caps text-[8px] sm:text-[10px] text-outline mb-2 sm:mb-6 tracking-widest">THREAT_DETECTION</div>
+              <div className="font-headline-md text-base sm:text-xl xl:text-3xl tracking-tighter font-black text-primary break-words">PRE_COMMIT</div>
+            </div>
+            <div className="border-r-thick border-b-thick border-primary p-4 sm:p-8 xl:p-16 flex flex-col items-center justify-center grayscale hover:grayscale-0 transition-all bg-white relative hover:bg-surface text-center">
+              <div className="registration-mark bottom-0 right-0 translate-x-[1px] translate-y-[1px]"></div>
+              <div className="font-label-caps text-[8px] sm:text-[10px] text-outline mb-2 sm:mb-6 tracking-widest">KNOWLEDGE_BASE</div>
+              <div className="font-headline-md text-base sm:text-xl xl:text-3xl tracking-tighter font-black text-primary break-words">1M+ PATTERNS</div>
+            </div>
+            <div className="border-r-thick border-b-thick border-primary p-4 sm:p-8 xl:p-16 flex flex-col items-center justify-center grayscale hover:grayscale-0 transition-all bg-surface-container-low relative text-center">
+              <div className="font-label-caps text-[8px] sm:text-[10px] text-outline mb-2 sm:mb-6 tracking-widest">SYSTEM_OUTPUT</div>
+              <div className="font-headline-md text-base sm:text-xl xl:text-3xl tracking-tighter font-black text-primary flex items-center justify-center gap-1 sm:gap-2 flex-wrap break-words">
+                <span className="material-symbols-outlined text-[16px] sm:text-xl md:text-2xl">verified</span> DETERMINISTIC
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Technical Blueprint Decorative Image */}
+        <section className="p-margin-edge bg-surface blueprint-bg border-b-thick border-primary relative">
+          <div className="meta-tag left-4 top-12">SEC: SCHEMATIC</div>
+          <div className="meta-tag right-4 top-12">PAGE: 04/04</div>
+          <div className="w-full aspect-[21/9] border-thick border-primary relative overflow-hidden bg-white max-w-6xl mx-auto shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+            <div className="absolute inset-0 blueprint-bg-dense opacity-20"></div>
+            <div className="absolute top-4 right-4 flex gap-2 z-20">
+              <div className="w-3 h-3 border-thick border-primary rounded-full bg-white"></div>
+              <div className="w-3 h-3 border-thick border-primary rounded-full bg-white"></div>
+            </div>
+            <img className="w-full h-full object-cover mix-blend-multiply grayscale contrast-125 p-8" alt="A highly technical Swiss architectural blueprint drawing of a complex server infrastructure." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy5DwOvESkAvaBOZapRuOsIxznKAeTK9suCqx-09W0miP5UWEmWJWZv6gTMKyZkJ_I2mj63UP_wHt9IrOX-p7B4a8f8a8ibX2LBaSoKi3-XBkc20vEYgDLCaJuBsRMil5WvxVZEfhjC0FtYxjKDm-1SUer1xd0WdhDyfswAeD_yP6K4xNExZjZN3GfEbxfG_tXCEk8IN8rMqMY6nfmSl2S4nfq4jIGbU-88YYSR64U66_Te60n6h-C" />
+            <div className="absolute bottom-6 left-6 bg-primary text-white px-5 py-3 font-label-caps text-xs border-thick border-primary tracking-widest flex items-center gap-3">
+              <span className="material-symbols-outlined text-[16px]">visibility</span> SYS_ARCH_DET_01
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full border-t-thick border-primary px-margin-edge py-12 flex flex-col md:flex-row justify-between items-center bg-white z-10 relative">
+        <div className="font-label-caps text-[12px] font-bold">
+          © {currentYear} TRADEOFF SYSTEMS. ALL RIGHTS RESERVED.
         </div>
-
-        {/* RIGHT PANE: The Report (Pristine White) */}
-        <div className={`${isSidebarCollapsed ? 'w-full' : 'w-full lg:w-2/3'} bg-white lg:h-full lg:overflow-y-auto relative transition-all duration-300 ease-in-out`}>
-          <AnimatePresence mode="wait">
-            
-            {/* Empty State */}
-            {!result && !error && !isPending && (
-              <motion.div 
-                key="empty"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="h-full flex flex-col items-center justify-center text-center p-8"
-              >
-                <div className="w-12 h-12 mb-4 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-100 shadow-sm">
-                  <Activity className="w-5 h-5 text-zinc-300" />
-                </div>
-                <h3 className="text-zinc-900 font-medium text-sm">No review started</h3>
-                <p className="text-zinc-500 text-sm mt-1">Submit your project brief to begin the tradeoff analysis.</p>
-              </motion.div>
-            )}
-
-            {/* Skeleton Loading State */}
-            {isPending && (
-              <motion.div 
-                key="loading"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="p-8 lg:p-16 max-w-4xl mx-auto w-full space-y-10"
-              >
-                {/* Header Skeleton */}
-                <div className="space-y-4 border-b border-zinc-100 pb-8">
-                  <div className="flex justify-between items-center">
-                    <div className="h-6 w-32 bg-zinc-100 rounded animate-pulse"></div>
-                    <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse"></div>
-                  </div>
-                  <div className="h-10 w-3/4 bg-zinc-100 rounded animate-pulse"></div>
-                  <div className="h-20 w-full bg-zinc-50 rounded animate-pulse mt-4"></div>
-                </div>
-
-                {/* Grid Skeleton */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="h-32 bg-zinc-50 rounded-lg animate-pulse border-l-4 border-zinc-200"></div>
-                  <div className="h-32 bg-zinc-50 rounded-lg animate-pulse border-l-4 border-zinc-200"></div>
-                </div>
-
-                {/* List Skeleton */}
-                <div className="space-y-4">
-                  <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-6"></div>
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-zinc-50 rounded animate-pulse"></div>
-                      <div className="space-y-2 flex-grow">
-                        <div className="h-4 w-1/3 bg-zinc-100 rounded animate-pulse"></div>
-                        <div className="h-3 w-1/4 bg-zinc-50 rounded animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Error State */}
-            {error && !isPending && (
-              <motion.div 
-                key="error"
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="m-8 lg:m-16 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 shadow-sm"
-              >
-                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <p className="text-sm font-medium">{error}</p>
-              </motion.div>
-            )}
-
-            {/* Uncertainty / Pushback State */}
-            {result && result.status === 'uncertainty' && !isPending && (
-              <motion.div 
-                key="uncertainty"
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="p-8 lg:p-16 max-w-2xl mx-auto space-y-6"
-              >
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                      <HelpCircle className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-amber-900 tracking-tight">Clarification Required</h2>
-                  </div>
-                  <p className="text-amber-800/90 text-sm leading-relaxed mb-6 font-medium">
-                    {result.reason}
-                  </p>
-                  
-                  <div className="bg-white rounded-md border border-amber-100 p-5 space-y-4">
-                    <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" /> Questions I Need Answered
-                    </h3>
-                    <ul className="space-y-4">
-                      {result.questions.map((q, i) => (
-                        <li key={i} className="flex flex-col gap-2">
-                          <label className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></div>
-                            <span className="text-sm font-medium text-zinc-800 leading-snug">{q}</span>
-                          </label>
-                          <input 
-                            type="text"
-                            value={answers[i] || ''}
-                            onChange={(e) => setAnswers({...answers, [i]: e.target.value})}
-                            placeholder="Your answer..."
-                            className="w-full ml-4.5 bg-zinc-50 border border-amber-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-md text-sm p-2.5 outline-none transition-all placeholder-zinc-400 text-zinc-900"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-4 border-t border-amber-200/50 flex items-center justify-between">
-                    <p className="text-xs text-amber-700/70 italic">
-                      Without these answers, any architecture recommendation has low confidence.
-                    </p>
-                    <button 
-                      onClick={handleRetryWithAnswers}
-                      disabled={Object.values(answers).every(a => !a.trim())}
-                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-md shadow-sm transition-colors"
-                    >
-                      Update Brief & Retry
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Success State */}
-            {result && result.status === 'success' && !isPending && (
-              <ReviewMemo 
-                data={result.data} 
-                inputCapabilities={result.inputCapabilities} 
-                reviewId={result.reviewId}
-                onExportMarkdown={handleExport}
-              />
-            )}
-          </AnimatePresence>
+        <div className="flex gap-4 mt-4 md:mt-0 font-label-caps text-[12px] text-secondary">
+          <Link href="/methodology" className="hover:text-primary transition-colors">METHODOLOGY</Link>
+          <Link href="/api" className="hover:text-primary transition-colors">API REFERENCE</Link>
+          <Link href="/changelog" className="hover:text-primary transition-colors">CHANGELOG</Link>
+          <Link href="/privacy" className="hover:text-primary transition-colors">PRIVACY</Link>
         </div>
-      </div>
+      </footer>
     </div>
-  );
-}
-
-function Loader({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-    </svg>
   );
 }
