@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ArchitectureOutput } from '@/engine/types';
 
 interface ReviewMemoProps {
@@ -10,19 +11,49 @@ interface ReviewMemoProps {
 }
 
 export function ReviewMemo({ data, reviewId, onExportMarkdown }: ReviewMemoProps) {
+  const [copyState, setCopyState] = useState<'IDLE' | 'COPIED'>('IDLE');
+
+  const handleCopyLink = async () => {
+    try {
+      const url = new URL(window.location.href);
+      if (reviewId) url.searchParams.set('remix', reviewId);
+      await navigator.clipboard.writeText(url.toString());
+      setCopyState('COPIED');
+      setTimeout(() => setCopyState('IDLE'), 2000);
+    } catch (e) {
+      console.error("Failed to copy link", e);
+    }
+  };
+
+  const handleExportPDF = () => {
+    window.print();
+  };
+
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Action Bar (Top) */}
-      {onExportMarkdown && (
-        <div className="flex justify-end w-full border-b-[2px] border-[#000000] pb-2">
+      <div className="flex flex-wrap justify-end gap-3 w-full border-b-[2px] border-[#000000] pb-2 print:hidden">
+        <button 
+          onClick={handleCopyLink}
+          className="font-mono text-[10px] sm:text-[12px] font-bold border-[2px] border-[#000000] px-4 py-2 uppercase tracking-widest bg-[#ffffff] hover:bg-[#000000] hover:text-[#ffffff] transition-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[14px]">link</span> {copyState === 'COPIED' ? 'COPIED_TO_CLIPBOARD' : 'COPY_LINK'}
+        </button>
+        <button 
+          onClick={handleExportPDF}
+          className="font-mono text-[10px] sm:text-[12px] font-bold border-[2px] border-[#000000] px-4 py-2 uppercase tracking-widest bg-[#ffffff] hover:bg-[#000000] hover:text-[#ffffff] transition-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[14px]">picture_as_pdf</span> EXPORT_PDF
+        </button>
+        {onExportMarkdown && (
           <button 
             onClick={onExportMarkdown}
             className="font-mono text-[10px] sm:text-[12px] font-bold border-[2px] border-[#000000] px-4 py-2 uppercase tracking-widest bg-[#ffffff] hover:bg-[#000000] hover:text-[#ffffff] transition-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]">download</span> EXPORT_MARKDOWN
+            <span className="material-symbols-outlined text-[14px]">download</span> EXPORT_MD
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 1. Executive Summary */}
       <div className="border-[2px] border-[#000000] bg-[#ffffff] relative z-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full flex flex-col">
