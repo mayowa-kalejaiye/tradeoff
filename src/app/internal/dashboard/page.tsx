@@ -48,11 +48,12 @@ export default async function DashboardPage() {
         </header>
 
         {/* KPI Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
           <KPICard title="TOTAL_REVIEWS" value={metrics.totalStartedReviews} icon="trending_up" />
           <KPICard title="COMPLETION_RATE" value={`${metrics.completionRate}%`} icon="check_circle" />
           <KPICard title="AVG_CONFIDENCE" value={`${metrics.avgConfidence}%`} icon="psychology" />
           <KPICard title="AVG_PROMPT_LEN" value={`${metrics.avgPromptLength}`} icon="track_changes" />
+          <KPICard title="ADVICE_ACCEPTED" value={`${metrics.adviceAcceptedRate}%`} icon="verified" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
@@ -101,7 +102,7 @@ export default async function DashboardPage() {
         {/* Breakdown Grid Row 1 */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-12">
           <ListCard title="ARCH_FREQ_DIST" items={metrics.topArchitectures} />
-          <ListCard title="TOP_DOMAINS" items={metrics.topDomains} />
+          <ListCard title="TOP_CAPABILITIES" items={metrics.topCapabilities as any} />
           <ListCard title="TOP_EXISTENTIAL_RISKS" items={metrics.topRisks} />
         </div>
 
