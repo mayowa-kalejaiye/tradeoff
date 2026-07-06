@@ -8,9 +8,10 @@ interface ReviewMemoProps {
   inputCapabilities?: { name: string; score: number; source: 'llm' | 'deterministic' }[];
   reviewId?: string;
   onExportMarkdown?: () => void;
+  debugMode?: boolean;
 }
 
-export function ReviewMemo({ data, reviewId, onExportMarkdown }: ReviewMemoProps) {
+export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: ReviewMemoProps) {
   const [copyState, setCopyState] = useState<'IDLE' | 'COPIED'>('IDLE');
 
   const handleCopyLink = async () => {
@@ -169,20 +170,100 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown }: ReviewMemoProps
                     </div>
 
                     <div className="p-4 flex flex-col justify-start hover:bg-[#f9f9f9] transition-none text-[#5d5f5f]">
-                      <span className="uppercase mb-2 font-bold font-mono tracking-widest border-b-[1px] border-[#cfc4c5] pb-1">WHY NOT:</span>
-                      {card.alternatives && card.alternatives.length > 0 ? (
-                        <div className="flex flex-col gap-2">
-                          {card.alternatives.map((alt, altIdx) => (
-                            <span key={altIdx} className="line-through leading-relaxed">{alt.name}</span>
+                      <span className="uppercase mb-2 font-bold font-mono tracking-widest border-b-[1px] border-[#cfc4c5] pb-1">EVIDENCE & PRINCIPLES:</span>
+                      {card.evidence && card.evidence.length > 0 && (
+                        <div className="flex flex-col gap-1 mb-3">
+                          {card.evidence.map((ev, evIdx) => (
+                            <span key={`ev-${evIdx}`} className="leading-relaxed flex items-start gap-1">
+                              <span className="text-green-600 font-bold shrink-0">+</span> {ev}
+                            </span>
                           ))}
                         </div>
-                      ) : (
-                        <span className="line-through leading-relaxed">{card.losesWhen && card.losesWhen.length > 0 ? card.losesWhen[0] : 'N/A'}</span>
+                      )}
+                      {card.principles && card.principles.length > 0 && (
+                        <div className="flex flex-col gap-1 border-t-[1px] border-dashed border-[#cfc4c5] pt-2">
+                          {card.principles.map((pr, prIdx) => (
+                            <span key={`pr-${prIdx}`} className="leading-relaxed font-mono text-[9px] uppercase bg-zinc-100 px-1 py-0.5 self-start">
+                              {pr}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. Engine Diagnostics (Internal Developer Mode) */}
+        {debugMode && data.telemetry && (
+          <div className="border-[2px] border-[#000000] bg-zinc-50 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-8">
+            <div className="bg-amber-400 text-[#000000] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
+              <span className="material-symbols-outlined text-[16px]">bug_report</span>
+              <span>05. ENGINE_DIAGNOSTICS (DEV_MODE)</span>
+            </div>
+            
+            <div className="p-4 flex flex-col gap-6 font-mono text-[10px] sm:text-[11px] overflow-x-auto">
+              
+              {/* Execution Traces (Winners & Losers) */}
+              <div>
+                <h3 className="font-bold border-b border-[#000000] pb-2 mb-3 uppercase">Execution Traces (Evaluated Candidates)</h3>
+                <div className="flex flex-col gap-3">
+                  {(data.telemetry as any).executionTraces?.map((trace: any, idx: number) => (
+                    <div key={idx} className={`border-[1px] p-3 ${trace.isWinner ? 'bg-green-50 border-green-800' : 'bg-white border-zinc-300'}`}>
+                      <div className="flex justify-between items-start mb-2 border-b border-dashed border-zinc-300 pb-2">
+                        <div className="font-bold text-sm flex gap-2 items-center">
+                          {trace.isWinner ? '🏆' : '❌'} {trace.candidateName} <span className="text-zinc-500 font-normal">({trace.candidateId})</span>
+                        </div>
+                        <div className="bg-zinc-800 text-white px-2 py-0.5 rounded text-[9px]">ARENA: {trace.arena}</div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="font-bold text-zinc-600 mb-1">Activation (Eligibility)</div>
+                          {trace.activation.anyOfSatisfied?.length > 0 && <div>anyOf: {trace.activation.anyOfSatisfied.map((a:any)=>`${a.name}(${a.score})`).join(', ')}</div>}
+                          {trace.activation.allOfSatisfied?.length > 0 && <div>allOf: {trace.activation.allOfSatisfied.map((a:any)=>`${a.name}(${a.score})`).join(', ')}</div>}
+                        </div>
+                        
+                        <div>
+                          <div className="font-bold text-zinc-600 mb-1">Evaluation (Score: {Math.round(trace.evaluation.finalScore)})</div>
+                          <div className="text-zinc-500">Base: {trace.evaluation.baseScore}</div>
+                          {trace.evaluation.driverBonuses?.map((db:any, i:number) => <div key={i} className="text-blue-600">Driver +{Math.round(db.bonus)}: {db.driver}</div>)}
+                          {trace.evaluation.capabilityBonuses?.map((cb:any, i:number) => <div key={i} className="text-green-600">Cap +{Math.round(cb.bonus)}: {cb.capability}</div>)}
+                          {trace.evaluation.industryBonuses?.map((ib:any, i:number) => <div key={i} className="text-amber-600">Ind +{Math.round(ib.bonus)}: {ib.industry}</div>)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Suppressed Nodes */}
+              <div>
+                <h3 className="font-bold border-b border-[#000000] pb-2 mb-3 uppercase mt-4">Suppressed Candidates (Gated)</h3>
+                <div className="flex flex-col gap-2">
+                  {data.telemetry.suppressedNodes?.map((node: any, idx: number) => {
+                    if (typeof node === 'string') return <div key={idx} className="p-2 border border-red-200 bg-red-50 text-red-800">{node} (Legacy)</div>;
+                    return (
+                      <div key={idx} className="p-2 border border-red-200 bg-red-50 flex flex-col gap-1 text-red-900">
+                        <div className="font-bold flex items-center justify-between">
+                          <span>{node.name} <span className="font-normal opacity-70">({node.id})</span></span>
+                          <span className="bg-red-800 text-white px-2 py-0.5 rounded text-[9px] uppercase">{node.reason}</span>
+                        </div>
+                        {node.failedEligibility && (
+                          <div className="opacity-80">Failed {node.failedEligibility.type}: {node.failedEligibility.details.join(', ')}</div>
+                        )}
+                        {node.failedConstraint && (
+                          <div className="opacity-80 text-xs italic">Constraint failed: {node.failedConstraint}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
           </div>
         )}

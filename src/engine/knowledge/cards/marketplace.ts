@@ -25,25 +25,45 @@ export const marketplaceGraph: DecisionGraph = {
       id: 'meilisearch',
       type: 'Implementation',
       name: 'Meilisearch',
-      description: 'Typo-tolerant search engine',
+      description: 'Typo-tolerant search engine optimized for fast user-facing queries.',
       systemGroup: 'core',
       capability: 'faceted_search',
-      kind: 'judgment',
-      strength: 'recommended',
-      gains: ['Fast setup', 'Great typo tolerance'],
-      costs: ['Self-hosting overhead if not using cloud'],
-      alternatives: [
-        { id: 'algolia', reasonRejected: 'Can be very expensive at scale.', whenItWins: 'When enterprise SLAs and extensive tooling are needed and budget is high.' },
-        { id: 'elasticsearch', reasonRejected: 'Too complex to run for early stage.', whenItWins: 'Massive scale and complex aggregations.' }
+      
+      engineeringComplexity: 'Medium',
+      operationalCost: 'Low',
+
+      eligibility: {
+        anyOf: ['faceted_search', 'search_engine']
+      },
+      applicability: {
+        prefersCapabilities: ['faceted_search'],
+        prefersIndustries: ['marketplace', 'ecommerce']
+      },
+
+      winsWhen: [
+        'Users expect instant, typo-tolerant search results (like Algolia) on a budget.',
+        'The search index fits comfortably in RAM (typically <100GB).',
+        'You have a small engineering team and need rapid setup.'
       ],
+      losesWhen: [
+        'Massive log analytics or complex vector aggregations are needed.',
+        'Data sets scale into the terabytes where RAM limitations become a hard blocker.'
+      ],
+      antiPatterns: [],
+      counterExamples: [],
+      migrationPath: ['Postgres pg_trgm', 'Meilisearch', 'Elasticsearch'],
+      failureModes: [],
+      changesWhen: ['search_index_size > 100GB'],
+      principles: ['locality_beats_latency'],
+      
+      replaces: ['pg_trgm'],
+      incompatibleWith: [],
+
       drivers: {
         [ArchitectureDriver.DeveloperVelocity]: 0.8,
         [ArchitectureDriver.Latency]: 0.9
       },
-      authorities: {
-        [DecisionContext.Search]: 0.80
-      },
-      score: (model) => model.budget === 'bootstrap' || model.teamScale === 'solo' ? 90 : 50
+      score: (model) => 40
     }],
     ['split_payments', {
       id: 'split_payments',
@@ -70,21 +90,41 @@ export const marketplaceGraph: DecisionGraph = {
       description: 'Handles split payments, 1099 tax forms, and KYC compliance for sellers.',
       systemGroup: 'compliance',
       capability: 'split_payments',
-      kind: 'rule',
-      strength: 'critical',
-      gains: ['Offloads complex compliance (KYC, 1099s)', 'Handles international payouts'],
-      costs: ['High platform fees', 'Vendor lock-in'],
-      alternatives: [
-        { id: 'adyen', reasonRejected: 'High barrier to entry', whenItWins: 'Enterprise scale multi-region platforms' }
+      
+      engineeringComplexity: 'Medium',
+      operationalCost: 'High',
+
+      eligibility: {
+        anyOf: ['split_payments', 'marketplace']
+      },
+      applicability: {
+        prefersCapabilities: ['split_payments'],
+        prefersIndustries: ['marketplace']
+      },
+
+      winsWhen: [
+        'The platform needs to split funds between sellers and the platform seamlessly.',
+        'You want to offload tax reporting (1099s) and KYC (Know Your Customer) compliance.'
       ],
+      losesWhen: [
+        'Operating in high-risk industries (Stripe will ban you).',
+        'Operating exclusively in regions where Stripe is not supported.'
+      ],
+      antiPatterns: [],
+      counterExamples: [],
+      migrationPath: ['Standard Payment Gateway', 'Stripe Connect', 'Custom Escrow Ledger + Multiple Gateways'],
+      failureModes: [],
+      changesWhen: ['revenue > $100M (negotiate custom rates or build in-house ledger)'],
+      principles: ['favor_managed_services_for_compliance'],
+      
+      replaces: [],
+      incompatibleWith: [],
+
       drivers: {
         [ArchitectureDriver.Compliance]: 0.95,
         [ArchitectureDriver.DeveloperVelocity]: 0.8
       },
-      authorities: {
-        [DecisionContext.Payments]: 0.90
-      },
-      score: (model) => model.capabilities.some(d => d.name === 'marketplace') ? 95 : 0
+      score: (model) => 50
     }],
     ['postgres', {
       id: 'postgres',

@@ -41,6 +41,13 @@ export function adaptV3toV5(v3Graph: DecisionGraph): ReasoningGraph {
       changesWhen: node.invalidWhen || ['Scale exceeds limits'],
       principles: (node as any).principles || [], 
       
+      eligibility: (node as any).eligibility,
+      applicability: (node as any).applicability,
+      incompatibleWith: (node as any).incompatibleWith,
+      requires: (node as any).requires,
+      supersedes: (node as any).supersedes,
+      replaces: (node as any).replaces,
+
       drivers: node.drivers,
       score: node.score,
     };

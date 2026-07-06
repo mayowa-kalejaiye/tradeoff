@@ -3,11 +3,19 @@ import { architectureReviews } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { ReviewMemo } from '@/components/ReviewMemo';
 import { notFound } from 'next/navigation';
-import { ArchitectureOutput, ArchetypeScore } from '@/engine/types';
+import { ArchitectureOutput } from '@/engine/types';
 import Link from 'next/link';
 
-export default async function PublicReviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PublicReviewPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id } = await params;
+  const { debug } = await searchParams;
+  const isDebugMode = debug === 'true';
 
   if (!id) {
     notFound();
@@ -47,7 +55,7 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ i
 
   const data = review.rawOutput as ArchitectureOutput;
   const rawInput = review.rawInput as any;
-  const inputArchetypes = rawInput?.archetypes as ArchetypeScore[] || [];
+  const inputArchetypes = rawInput?.archetypes || [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -70,7 +78,7 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="max-w-4xl mx-auto py-8">
-        <ReviewMemo data={data} inputCapabilities={inputArchetypes.map((a: any) => ({...a, source: 'llm'}))} />
+        <ReviewMemo data={data} inputCapabilities={inputArchetypes.map((a: any) => ({...a, source: 'llm'}))} debugMode={isDebugMode} />
       </div>
     </div>
   );

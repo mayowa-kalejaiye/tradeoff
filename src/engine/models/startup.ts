@@ -1,4 +1,4 @@
-import { ArchetypeScore, Priority, TechnicalExperience, UserMetric, TransactionVolume, ComplianceLevel } from '../types';
+import { ExtractedCapability, IndustryContext, Priority, TechnicalExperience, UserMetric, TransactionVolume, ComplianceLevel } from '../types';
 
 export type TeamSize = 'solo' | 'small' | 'medium' | 'enterprise';
 export type Scale = 'mvp' | 'growth' | 'massive';
@@ -11,7 +11,8 @@ export interface StartupModel {
   isValidRequest: boolean;
   projectIdea: string;
   intent: string;
-  capabilities: { name: string; score: number; source: 'llm' | 'deterministic' }[];
+  capabilities: ExtractedCapability[];
+  industryContexts: IndustryContext[];
   expectedUsers: number;
   userMetric?: UserMetric;
   transactionVolume?: TransactionVolume;

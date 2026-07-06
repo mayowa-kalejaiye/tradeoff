@@ -67,11 +67,21 @@ export const roboticsGraph: DecisionGraph = {
       ],
       principles: ['prefer_deterministic'], 
       
+      eligibility: {
+        anyOf: ['coordination.*', 'robotics', 'vision.*']
+      },
+      applicability: {
+        prefersCapabilities: ['coordination.robot', 'coordination.fleet', 'vision.localization'],
+        prefersIndustries: ['robotics', 'autonomous_vehicle']
+      },
+      requires: [],
+      incompatibleWith: [],
+      
       drivers: {
         [ArchitectureDriver.Maintainability]: 0.8,
         [ArchitectureDriver.Reliability]: 0.9,
       },
-      score: (model: StartupModel) => model.capabilities?.some(d => d.name === 'robotics') ? 95 : 5
+      score: (model: StartupModel) => 50
     }],
     ['mqtt_fleet', {
       id: 'mqtt_fleet',

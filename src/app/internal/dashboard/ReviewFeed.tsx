@@ -41,7 +41,7 @@ export function ReviewFeed({ initialReviews }: { initialReviews: RecentReview[] 
                   <span className="text-[12px] text-[#5d5f5f] font-mono font-bold uppercase tracking-widest bg-[#e8e8e8] px-2 py-1 border-[1px] border-[#cfc4c5]">
                     {new Date(review.createdAt).toLocaleString()}
                   </span>
-                  <Link href={`/r/${review.id}`} target="_blank" className="text-[12px] font-mono text-[#000000] font-bold uppercase tracking-widest flex items-center gap-1 border-b-[2px] border-[#000000] hover:bg-[#000000] hover:text-[#ffffff] transition-none px-1">
+                  <Link href={`/r/${review.id}?debug=true`} target="_blank" className="text-[12px] font-mono text-[#000000] font-bold uppercase tracking-widest flex items-center gap-1 border-b-[2px] border-[#000000] hover:bg-[#000000] hover:text-[#ffffff] transition-none px-1">
                     VIEW_REPORT <span className="material-symbols-outlined text-[14px]">open_in_new</span>
                   </Link>
                 </div>

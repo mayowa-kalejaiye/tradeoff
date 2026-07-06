@@ -68,35 +68,42 @@ export const fleetManagementGraph: DecisionGraph = {
       description: 'Lightweight pub/sub message broker optimized for high-latency, low-bandwidth, and unreliable networks.',
       systemGroup: 'fleet_comms',
       capability: 'Edge-Cloud Messaging',
-      kind: 'judgment',
-      strength: 'strongly_recommended',
-      gains: [
-        'Low network overhead',
-        'Built-in QoS levels for delivery guarantees',
-        'Excellent library support for embedded devices'
+      
+      engineeringComplexity: 'Medium',
+      operationalCost: 'Medium',
+
+      eligibility: {
+        noneOf: ['ultra_low_latency', 'financial_critical'], // Blocks it from HFT!
+      },
+      applicability: {
+        prefersCapabilities: ['messaging.telemetry.*', 'offline_sync'],
+        prefersIndustries: ['robotics', 'iot', 'autonomous_vehicle']
+      },
+
+      winsWhen: [
+        'Devices have intermittent network connectivity',
+        'Payloads are small and bandwidth is expensive',
+        'Large fan-in (millions of devices to one cloud) is required'
       ],
-      costs: [
-        'Requires dedicated infrastructure or managed service',
-        'Complex to scale horizontally compared to HTTP'
+      losesWhen: [
+        'Strict request/response RPC semantics are required',
+        'Large payloads (video/audio streaming) are needed'
       ],
-      alternatives: [
-        {
-          id: 'http_polling',
-          reasonRejected: 'Too much overhead and battery drain for large fleets.',
-          whenItWins: 'Extremely small scale or environments blocking non-HTTP traffic.'
-        }
-      ],
-      invalidWhen: ['model.latencyTolerance === "high"'],
+      antiPatterns: [],
+      counterExamples: ['Uber initially used HTTP for driver phones before switching to a persistent protocol.'],
+      migrationPath: ['HTTP Polling', 'MQTT', 'Kafka Bridge'],
+      failureModes: [],
+      changesWhen: ['fleet > 100,000 devices'],
+      principles: ['offline_first'],
+      
+      replaces: ['http_polling'],
+      incompatibleWith: [],
+
       drivers: {
-        [ArchitectureDriver.Latency]: 0.9,
-        [ArchitectureDriver.Reliability]: 0.8,
+        [ArchitectureDriver.Reliability]: 0.9,
         [ArchitectureDriver.Scalability]: 0.7
       },
-      authorities: {
-        [DecisionContext.Messaging]: 1.0,
-        [DecisionContext.FleetOps]: 0.9
-      },
-      score: (model: StartupModel) => model.capabilities.some(a => a.name === 'robotics' || a.name === 'iot') ? 90 : 15
+      score: (model: StartupModel) => 40 // Base score, applicability handles the rest
     }],
     ['ota_rollout', {
       id: 'ota_rollout',

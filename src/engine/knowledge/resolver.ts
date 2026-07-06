@@ -32,10 +32,13 @@ export interface ExecutiveFacts {
   notChosenCount: number;
 }
 
+import { ExecutionTrace, SuppressedNode } from '../debug/trace';
+
 // ─── Resolution Telemetry ───
 export interface ResolutionTelemetry {
   activatedNodes: string[];
-  suppressedNodes: string[];
+  suppressedNodes: SuppressedNode[];
+  executionTraces: ExecutionTrace[];
   decisionRecords: DecisionRecord[];
   pressureMap: PressureSource[];
   executiveFacts: ExecutiveFacts;
@@ -96,7 +99,7 @@ function computePressureMap(model: StartupModel): Map<ArchitectureDriver, number
 
   let safety = 10;
   if (model.criticality === 'safety_critical') safety += 70;
-  if (model.capabilities?.some(c => c.name === 'robot_coordination' || c.name === 'fleet_management')) safety += 20;
+  if (model.capabilities?.some(c => c.id === 'robot_coordination' || c.id === 'fleet_management')) safety += 20;
   pressures.set(ArchitectureDriver.Safety, Math.min(100, safety));
 
   let security = 20;
@@ -158,35 +161,159 @@ export function resolveGraph(
   const allNodes = reasoningGraph.nodes;
   const allEdges = reasoningGraph.edges;
 
-  // 2. Compute pressure map from constraints
-  const pressures = computePressureMap(model);
+  // 1.5 Compile capability strings for quick match (handling .* wildcards)
+  const extractedCaps = model.capabilities || [];
+  const matchCap = (pattern: string) => {
+    if (pattern.endsWith('.*')) {
+      const prefix = pattern.slice(0, -2);
+      return extractedCaps.some(c => c.id.startsWith(prefix));
+    }
+    return extractedCaps.some(c => c.id === pattern);
+  };
 
-  // Filter down to Implementation Options for scoring
+  const getCapScore = (pattern: string) => {
+    if (pattern.endsWith('.*')) {
+      const prefix = pattern.slice(0, -2);
+      const matches = extractedCaps.filter(c => c.id.startsWith(prefix));
+      return matches.length > 0 ? Math.max(...matches.map(m => m.score)) : 0;
+    }
+    const match = extractedCaps.find(c => c.id === pattern);
+    return match ? match.score : 0;
+  };
+
+  // 2. Filter down to Implementation Options and apply Eligibility (Activation Gate)
   const candidates = new Map<string, ImplementationNode>();
+  const suppressedNodes: SuppressedNode[] = [];
+  const executionTraces: ExecutionTrace[] = [];
+  
   for (const [id, node] of allNodes.entries()) {
     if (node.type === 'Implementation') {
-      candidates.set(id, node as ImplementationNode);
+      const n = node as ImplementationNode;
+      let eligible = true;
+      let failedElgType: 'anyOf' | 'allOf' | 'noneOf' | undefined;
+      let failedDetails: string[] = [];
+      
+      if (n.eligibility) {
+        if (n.eligibility.noneOf && n.eligibility.noneOf.some(matchCap)) {
+          eligible = false;
+          failedElgType = 'noneOf';
+          failedDetails = n.eligibility.noneOf.filter(matchCap);
+        } else if (n.eligibility.allOf && !n.eligibility.allOf.every(matchCap)) {
+          eligible = false;
+          failedElgType = 'allOf';
+          failedDetails = n.eligibility.allOf.filter(c => !matchCap(c));
+        } else if (n.eligibility.anyOf && !n.eligibility.anyOf.some(matchCap)) {
+          eligible = false;
+          failedElgType = 'anyOf';
+          failedDetails = n.eligibility.anyOf;
+        }
+      }
+
+      if (eligible) {
+        candidates.set(id, n);
+      } else {
+        suppressedNodes.push({
+          id,
+          name: n.name,
+          reason: 'failed_eligibility',
+          failedEligibility: failedElgType ? { type: failedElgType, details: failedDetails } : undefined,
+          confidence: 100, // Determined at extraction
+          evidence: extractedCaps.map(c => c.name)
+        });
+      }
     }
   }
 
-  // 3. Initial scoring with driver pressure injection
+  // 3. Compute pressure map from constraints
+  const pressures = computePressureMap(model);
+
+  // 4. Initial scoring (Applicability Evaluation)
   const scores = new Map<string, number>();
+  const nodeEvidence = new Map<string, string[]>(); // Store scoring signals
+
+  const partialTraces = new Map<string, ExecutionTrace>();
+
   for (const [id, node] of candidates.entries()) {
     const baseScore = node.score(model);
+    let totalScore = baseScore;
+    const ev: string[] = [];
+    
+    const driverBonuses: { driver: string; bonus: number }[] = [];
+    const capabilityBonuses: { capability: string; bonus: number }[] = [];
+    const industryBonuses: { industry: string; bonus: number }[] = [];
 
-    // Inject pressure bonus from architecture drivers
-    let driverBonus = 0;
+    // Driver bonus
+    let driverBonusTotal = 0;
     if (node.drivers) {
       for (const [driver, driverWeight] of Object.entries(node.drivers)) {
         const pressure = pressures.get(driver as ArchitectureDriver) || 0;
-        driverBonus += (pressure / 100) * (driverWeight as number) * 15; // Up to +15 per driver
+        const b = (pressure / 100) * (driverWeight as number) * 15;
+        driverBonusTotal += b;
+        if (b > 0) driverBonuses.push({ driver, bonus: b });
+      }
+    }
+    totalScore += driverBonusTotal;
+
+    // Capability Match Bonus
+    if (node.applicability?.prefersCapabilities) {
+      for (const capPattern of node.applicability.prefersCapabilities) {
+        const capStrength = getCapScore(capPattern);
+        if (capStrength > 0) {
+          const capBonus = (capStrength / 100) * 20; // Up to 20 pts per matched preferred capability
+          totalScore += capBonus;
+          capabilityBonuses.push({ capability: capPattern, bonus: capBonus });
+          ev.push(`Matched capability ${capPattern} (+${Math.round(capBonus)})`);
+        }
       }
     }
 
-    scores.set(id, baseScore + driverBonus);
+    // Industry Context Bonus
+    if (node.applicability?.prefersIndustries) {
+      for (const ind of node.applicability.prefersIndustries) {
+        if (model.industryContexts?.includes(ind)) {
+          totalScore += 30; // Strong match for industry context
+          industryBonuses.push({ industry: ind, bonus: 30 });
+          ev.push(`Matched industry context ${ind} (+30)`);
+        }
+      }
+    }
+
+    scores.set(id, totalScore);
+    nodeEvidence.set(id, ev);
+    
+    // Build activation trace facts based on matching extracted caps
+    const anyOfSatisfied: {name: string, score: number}[] = [];
+    const allOfSatisfied: {name: string, score: number}[] = [];
+    if (node.eligibility?.anyOf) {
+      node.eligibility.anyOf.forEach(p => {
+        const sc = getCapScore(p);
+        if (sc > 0) anyOfSatisfied.push({ name: p, score: sc });
+      });
+    }
+    if (node.eligibility?.allOf) {
+      node.eligibility.allOf.forEach(p => {
+        const sc = getCapScore(p);
+        if (sc > 0) allOfSatisfied.push({ name: p, score: sc });
+      });
+    }
+
+    partialTraces.set(id, {
+      candidateId: id,
+      candidateName: node.name,
+      activation: { anyOfSatisfied, allOfSatisfied },
+      evaluation: {
+        baseScore,
+        driverBonuses,
+        capabilityBonuses,
+        industryBonuses,
+        finalScore: totalScore
+      },
+      isWinner: false,
+      arena: node.systemGroup || 'global'
+    });
   }
 
-  // 4. Edge traversal
+  // 5. Edge traversal
   let changed = true;
   let iterations = 0;
   while (changed && iterations < 5) {
@@ -211,9 +338,8 @@ export function resolveGraph(
     }
   }
 
-  // 5. Group by Capability into DecisionArenas
+  // 6. Group by Capability into DecisionArenas
   const activeNodes: ImplementationNode[] = [];
-  const suppressedNodes: string[] = [];
   const decisionRecords: DecisionRecord[] = [];
   const arenaMap = new Map<string, string[]>();
   const evidence = extractEvidence(model);
@@ -228,7 +354,7 @@ export function resolveGraph(
     arenaMap.get(cap)!.push(id);
   }
 
-  // For each capability arena, pick winner, record notChosen
+  // 7. For each capability arena, pick winner
   const contextWinners = new Set<string>();
   const driverInfluenceTracker = new Map<ArchitectureDriver, string[]>();
 
@@ -271,7 +397,20 @@ export function resolveGraph(
 
     // Build Decision Record
     const notChosen = ranked.slice(1).map(r => {
-      suppressedNodes.push(r.id);
+      suppressedNodes.push({
+        id: r.id,
+        name: r.node.name,
+        reason: 'failed_constraint', // Specifically, lost in the arena constraint
+        failedConstraint: `Scored lower than ${winner.node.name} for ${cap} (${r.totalScore.toFixed(0)} vs ${winner.totalScore.toFixed(0)})`,
+        confidence: 100,
+        evidence: []
+      });
+      
+      const loserTrace = partialTraces.get(r.id);
+      if (loserTrace) {
+        executionTraces.push(loserTrace);
+      }
+      
       return {
         id: r.id,
         name: r.node.name,
@@ -281,31 +420,61 @@ export function resolveGraph(
       };
     });
 
-    // Deterministic narrative generation based on evidence and capability
-    const primaryConstraint = evidence[0] || 'specific scaling requirements';
-    const rationale = `Because the system must handle ${primaryConstraint.toLowerCase()}, and requires ${cap.replace(/_/g, ' ')}, ${winner.node.name} is the optimal choice.`;
+    const winnerTrace = partialTraces.get(winner.id);
+    if (winnerTrace) {
+      winnerTrace.isWinner = true;
+      executionTraces.push(winnerTrace);
+    }
 
+    // 8. Engineering Principles (Explanatory Evidence)
     const principles = winner.node.principles?.map(pid => EngineeringPrinciples[pid]?.statement).filter(Boolean) as string[] || [];
     if (principles.length === 0) {
       principles.push("Favor standard patterns for predictability."); // Fallback principle
     }
+
+    // 9. Attach Scoring Signals
+    const scoringEvidence = nodeEvidence.get(winner.id) || [];
+    const combinedEvidence = [...evidence, ...scoringEvidence];
+
+    const rationale = `Because the system requires ${cap.replace(/_/g, ' ')}, ${winner.node.name} is the optimal choice.`;
 
     decisionRecords.push({
       capability: cap,
       chosen: winner.node,
       notChosen,
       rationale,
-      evidence,
+      evidence: combinedEvidence,
       principles,
       evidenceStrength: assessEvidenceStrength(winner.totalScore, driverAlignment),
       stability: computeStability(winner.node.changesWhen)
     });
+    
+    activeNodes.push(winner.node);
   }
 
-  for (const id of contextWinners) {
-    if (!activeNodes.find(n => n.id === id)) {
-      activeNodes.push(candidates.get(id)!);
+  // 10. Architecture Validation (Cross-Node Invariants)
+  const validationErrors: string[] = [];
+  const activeIds = new Set(activeNodes.map(n => n.id));
+
+  for (const node of activeNodes) {
+    if (node.requires) {
+      for (const req of node.requires) {
+        if (!activeIds.has(req)) {
+          validationErrors.push(`[Validation] ${node.name} requires ${req}, but it was not selected.`);
+        }
+      }
     }
+    if (node.incompatibleWith) {
+      for (const inc of node.incompatibleWith) {
+        if (activeIds.has(inc)) {
+          validationErrors.push(`[Validation] ${node.name} is incompatible with selected node ${inc}.`);
+        }
+      }
+    }
+  }
+
+  if (validationErrors.length > 0) {
+    console.warn("Architecture Validation Errors:\n" + validationErrors.join("\n"));
   }
 
   // 6. Build Pressure Map from driver influence tracking
@@ -346,11 +515,17 @@ export function resolveGraph(
     notChosenCount: decisionRecords.reduce((sum, dr) => sum + dr.notChosen.length, 0)
   };
 
+  // Deduplicate suppressed nodes by ID
+  const uniqueSuppressed = Array.from(
+    new Map(suppressedNodes.map(n => [n.id, n])).values()
+  );
+
   return {
     activeGraph: activeNodes,
     telemetry: {
       activatedNodes: activeNodes.map(n => n.id),
-      suppressedNodes: Array.from(new Set(suppressedNodes)),
+      suppressedNodes: uniqueSuppressed,
+      executionTraces,
       decisionRecords,
       pressureMap,
       executiveFacts

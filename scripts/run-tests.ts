@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { recommendArchitecture } from '../src/engine';
-import { ArchitectureInput, ProjectArchetype, Priority, ComplianceLevel } from '../src/engine/types';
+import { ArchitectureInput, IndustryContext, Priority, ComplianceLevel } from '../src/engine/types';
 
-const capabilities: ProjectArchetype[] = ['saas', 'fintech', 'healthcare', 'social_network', 'realtime_collaboration', 'internal_tool', 'ai_saas'];
+const capabilities: IndustryContext[] = ['saas', 'fintech', 'healthcare', 'social_network', 'realtime_collaboration', 'internal_tool', 'ai_saas'];
 const teamSizes = [1, 3, 15, 50];
 const expectedUsersArray = [1000, 50000, 1000000];
 const priorities: Priority[] = ['speed', 'scale', 'reliability'];
@@ -37,7 +37,8 @@ for (const archetype of capabilities) {
             isValidRequest: true,
             projectIdea: `Testing ${archetype} at ${priority} priority for ${expectedUsers} users.`,
             intent: `Testing ${archetype}`,
-            capabilities: [{ name: archetype, score: 95, source: 'deterministic' }],
+            industryContexts: [archetype],
+            capabilities: [{ id: archetype, name: archetype, score: 95, source: 'deterministic', evidence: [] }],
             teamScale: 'medium',
             teamSize: 5,
             expectedUsers,

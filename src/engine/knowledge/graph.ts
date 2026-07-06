@@ -157,6 +157,20 @@ export const EngineeringPrinciples: Record<string, EngineeringPrinciple> = {
   // ... extensible
 };
 
+import { IndustryContext } from '../types';
+
+export interface NodeEligibility {
+  anyOf?: string[];
+  allOf?: string[];
+  noneOf?: string[];
+}
+
+export interface NodeApplicability {
+  prefersCapabilities?: string[];
+  prefersConstraints?: string[];
+  prefersIndustries?: IndustryContext[];
+}
+
 export interface ImplementationNode {
   id: string;
   type: 'Implementation';
@@ -182,6 +196,16 @@ export interface ImplementationNode {
   // Referenced Principles
   principles: string[]; // array of principle IDs
   
+  // Capability-Driven Activation
+  eligibility?: NodeEligibility;
+  applicability?: NodeApplicability;
+
+  // Decision Invariants & Evolution
+  incompatibleWith?: string[];
+  requires?: string[];
+  supersedes?: string[];
+  replaces?: string[];
+
   // Graph scoring (determinant of evidence strength)
   drivers: Partial<Record<ArchitectureDriver, number>>;
   capability: string; // The arena this implementation competes in

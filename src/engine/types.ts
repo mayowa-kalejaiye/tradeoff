@@ -1,4 +1,4 @@
-export type ProjectArchetype = 
+export type IndustryContext = 
   | 'ecommerce' 
   | 'marketplace' 
   | 'saas' 
@@ -31,9 +31,18 @@ export type ProjectArchetype =
   | 'autonomous_vehicle'
   | 'other';
 
-export interface ArchetypeScore {
-  name: ProjectArchetype;
-  score: number;
+export interface ExtractedCapability {
+  id: string;      // Namespaced: e.g., "messaging.reliable.robot"
+  name: string;    // Legacy compat
+  score: number;   // 0-100
+  evidence: string[]; // Why this was activated
+  source: 'llm' | 'deterministic';
+}
+
+export interface ScoringSignal {
+  signal: string;
+  contribution: number;
+  evidence: string[];
 }
 
 export type Priority = 'speed' | 'scale' | 'cost' | 'reliability';
