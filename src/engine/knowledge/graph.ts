@@ -69,8 +69,8 @@ export interface DecisionNode {
   description: string;
   systemGroup: SystemGroup;
   capability?: string;
-  kind: DecisionKind;
-  strength: RecommendationStrength;
+  kind?: DecisionKind;
+  strength?: RecommendationStrength;
 
   // Tradeoff data (authored deterministically)
   gains?: string[];
@@ -80,8 +80,27 @@ export interface DecisionNode {
 
   // Graph scoring
   drivers: Partial<Record<ArchitectureDriver, number>>;
-  authorities: Partial<Record<DecisionContext, number>>;
+  authorities?: Partial<Record<DecisionContext, number>>;
   score: (model: StartupModel) => number;
+
+  // V5 Fields (Optional for backwards compatibility)
+  engineeringComplexity?: string;
+  operationalCost?: string;
+  winsWhen?: string[];
+  losesWhen?: string[];
+  antiPatterns?: string[];
+  counterExamples?: string[];
+  migrationPath?: string[];
+  failureModes?: any[];
+  scaleLimit?: any;
+  changesWhen?: string[];
+  principles?: string[];
+  eligibility?: any;
+  applicability?: any;
+  requires?: string[];
+  incompatibleWith?: string[];
+  supersedes?: string[];
+  replaces?: string[];
 }
 
 // ─── Edges ───

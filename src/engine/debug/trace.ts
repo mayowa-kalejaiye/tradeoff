@@ -23,7 +23,7 @@ export interface ExecutionTrace {
 export interface SuppressedNode {
   id: string;
   name: string;
-  reason: 'failed_eligibility' | 'failed_constraint' | 'missing_activation_capability';
+  reason: 'failed_eligibility' | 'failed_constraint' | 'missing_activation_capability' | 'lost_in_arena';
   failedEligibility?: { type: 'anyOf' | 'allOf' | 'noneOf'; details: string[] };
   failedConstraint?: string;
   missingCapabilities?: string[];

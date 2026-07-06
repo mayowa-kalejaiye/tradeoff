@@ -18,7 +18,7 @@ export const corpus: TestCase[] = [
     category: 'Explicit',
     input: {
       projectIdea: 'A standard e-commerce store selling shoes. We need user accounts, a shopping cart, and Stripe for checkout.',
-      industryContexts: ['retail'],
+      industryContexts: ['ecommerce'],
       capabilities: [
         { id: 'relational_storage', name: 'Relational', score: 90, source: 'llm', evidence: [] },
         { id: 'split_payments', name: 'split_payments', score: 100, source: 'llm', evidence: [] }
@@ -50,11 +50,11 @@ export const corpus: TestCase[] = [
     category: 'Explicit',
     input: {
       projectIdea: 'App for oil rig inspectors who are offline for weeks at a time.',
-      industryContexts: ['industrial'],
+      industryContexts: ['other'],
       capabilities: [
         { id: 'offline_sync', name: 'Offline', score: 100, source: 'llm', evidence: [] }
       ],
-      offlineRequirements: 'extensive'
+      offlineRequirements: 'full'
     },
     assertions: {
       mustActivate: [],
@@ -83,7 +83,7 @@ export const corpus: TestCase[] = [
     category: 'Explicit',
     input: {
       projectIdea: 'Generate images using stable diffusion on demand.',
-      industryContexts: ['ai'],
+      industryContexts: ['ai_saas'],
       capabilities: [
         { id: 'gpu_compute', name: 'GPU', score: 100, source: 'llm', evidence: [] },
         { id: 'object_storage', name: 'Storage', score: 90, source: 'llm', evidence: [] },
@@ -102,7 +102,7 @@ export const corpus: TestCase[] = [
     category: 'Implicit',
     input: {
       projectIdea: 'Process millions of clicks per second for an ad network.',
-      industryContexts: ['advertising'],
+      industryContexts: ['ad_tech'],
       capabilities: [
         { id: 'high_throughput', name: 'Throughput', score: 95, source: 'llm', evidence: [] }
       ],
@@ -118,11 +118,11 @@ export const corpus: TestCase[] = [
     category: 'Implicit',
     input: {
       projectIdea: 'Internal dashboard for 5 executives to view monthly sales.',
-      industryContexts: ['enterprise'],
+      industryContexts: ['internal_tool'],
       capabilities: [
         { id: 'relational_storage', name: 'Relational', score: 80, source: 'llm', evidence: [] }
       ],
-      scale: 'tiny',
+      scale: 'mvp',
       expectedUsers: 5
     },
     assertions: {
@@ -135,7 +135,7 @@ export const corpus: TestCase[] = [
     category: 'Implicit',
     input: {
       projectIdea: 'Live video streaming to 1M users.',
-      industryContexts: ['media'],
+      industryContexts: ['video_streaming'],
       capabilities: [
         { id: 'video_streaming', name: 'Video', score: 100, source: 'llm', evidence: [] },
         { id: 'cdn_distribution', name: 'CDN', score: 100, source: 'llm', evidence: [] }
@@ -151,7 +151,7 @@ export const corpus: TestCase[] = [
     category: 'Implicit',
     input: {
       projectIdea: 'Track GPS coordinates of 10,000 delivery trucks.',
-      industryContexts: ['logistics'],
+      industryContexts: ['iot'],
       capabilities: [
         { id: 'fleet_management', name: 'Fleet', score: 100, source: 'llm', evidence: [] },
         { id: 'messaging.telemetry.device', name: 'Telemetry', score: 100, source: 'llm', evidence: [] }
@@ -167,7 +167,7 @@ export const corpus: TestCase[] = [
     category: 'Implicit',
     input: {
       projectIdea: 'Cryptographic verifiable voting system.',
-      industryContexts: ['government'],
+      industryContexts: ['other'],
       capabilities: [
         { id: 'cryptography', name: 'Crypto', score: 100, source: 'llm', evidence: [] },
         { id: 'immutable_ledger', name: 'Ledger', score: 100, source: 'llm', evidence: [] }
@@ -190,7 +190,7 @@ export const corpus: TestCase[] = [
       capabilities: [
         { id: 'ultra_low_latency', name: 'Latency', score: 100, source: 'llm', evidence: [] }
       ],
-      budget: 'hobby'
+      budget: 'bootstrap'
     },
     assertions: {
       mustActivate: [],
@@ -267,7 +267,7 @@ export const corpus: TestCase[] = [
       capabilities: [
         { id: 'relational_storage', name: 'Relational', score: 80, source: 'llm', evidence: [] }
       ],
-      scale: 'tiny'
+      scale: 'mvp'
     },
     assertions: {
       mustActivate: [],
@@ -282,7 +282,7 @@ export const corpus: TestCase[] = [
       capabilities: [
         { id: 'static_hosting', name: 'Static', score: 100, source: 'llm', evidence: [] }
       ],
-      scale: 'tiny'
+      scale: 'mvp'
     },
     assertions: {
       mustActivate: [],

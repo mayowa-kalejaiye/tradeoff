@@ -346,7 +346,13 @@ export function resolveGraph(
 
   for (const [id, node] of candidates.entries()) {
     if ((scores.get(id) || 0) < 50) {
-      suppressedNodes.push(id);
+      suppressedNodes.push({
+        id,
+        name: node.name,
+        reason: 'lost_in_arena',
+        confidence: scores.get(id) || 0,
+        evidence: []
+      });
       continue;
     }
     const cap = node.capability || 'Core';

@@ -215,6 +215,7 @@ export interface ArchitectureOutput {
   decisionCards?: DecisionCard[];
   rejectedDecisions?: RejectedDecision[];
   pressureMap?: PressureMapEntry[];
+  telemetry?: any;
 }
 
 export type EngineResponse = 
