@@ -41,8 +41,9 @@ Only when the pain of coordinating deployments across 20+ engineers outweighs th
   }
 };
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = POSTS[params.slug];
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = POSTS[slug];
   if (!post) return { title: 'Post Not Found' };
   return {
     title: `${post.title} | Tradeoff Blog`,
@@ -50,8 +51,9 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   };
 }
 
-export default function BlogPost({ params }: { params: { slug: string } }) {
-  const post = POSTS[params.slug];
+export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = POSTS[slug];
   
   if (!post) {
     notFound();
