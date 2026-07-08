@@ -1,3 +1,5 @@
+<img width="1365" height="701" alt="image" src="https://github.com/user-attachments/assets/27892fc9-c0e6-4a17-8f83-a833248daaa2" />
+
 # Tradeoff: AI Architect
 **Engineering Reasoning Graph & Architecture Logs**
 
