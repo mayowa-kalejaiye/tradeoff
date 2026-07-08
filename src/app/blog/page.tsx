@@ -23,17 +23,12 @@ const POSTS = [
 
 export default function BlogIndex() {
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col p-8 md:p-16">
-      <div className="max-w-3xl mx-auto w-full">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-500 hover:text-black mb-12">
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Back to Generator
-        </Link>
-        
-        <h1 className="text-4xl md:text-5xl font-black uppercase mb-4 border-b-4 border-black pb-4">
-          Engineering Insights
+    <div className="w-full px-10 py-24 max-w-[1280px] mx-auto reveal-up">
+      <div className="max-w-3xl">
+        <h1 className="font-sans text-[4rem] font-black uppercase mb-4 border-b-[2px] border-primary pb-4">
+          ARCHIVE
         </h1>
-        <p className="text-zinc-600 font-mono mb-12">Thoughts on architecture, tradeoffs, and building pragmatic software.</p>
+        <p className="font-mono text-secondary mb-12">Thoughts on architecture, tradeoffs, and building pragmatic software.</p>
 
         <div className="space-y-8">
           {POSTS.map((post) => (

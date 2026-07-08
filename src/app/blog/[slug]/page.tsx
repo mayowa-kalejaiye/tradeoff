@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { WebGLBackground } from '@/components/WebGLBackground';
 
 // Mock database for now
 const POSTS: Record<string, any> = {
@@ -60,25 +61,124 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col p-8 md:p-16">
-      <div className="max-w-3xl mx-auto w-full">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-500 hover:text-black mb-12">
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          All Posts
-        </Link>
-        
-        <div className="bg-white border-[2px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8 md:p-12">
-          <div className="text-xs font-mono font-bold text-zinc-500 mb-4 uppercase tracking-widest">{post.date}</div>
-          <h1 className="text-3xl md:text-5xl font-black mb-8 leading-tight">{post.title}</h1>
-          
-          <div className="prose prose-zinc prose-lg max-w-none prose-headings:font-black prose-headings:uppercase prose-a:text-blue-600 prose-a:font-bold">
-            {/* In a real app we would use markdown-to-jsx or next-mdx-remote here */}
-            {post.content.split('\n\n').map((paragraph: string, i: number) => (
-              <div key={i} className="mb-6 whitespace-pre-wrap">{paragraph}</div>
-            ))}
-          </div>
+    <>
+      {/* Hero Section */}
+      <section className="relative min-h-[80vh] flex flex-col justify-end border-b-[2px] border-primary overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <WebGLBackground />
         </div>
-      </div>
-    </div>
+        <div className="relative z-10 w-full px-10 py-20 max-w-[1280px] mx-auto">
+          <div className="flex flex-wrap gap-4 mb-12 reveal-up">
+            <span className="font-mono text-[12px] bg-primary text-on-primary px-3 py-1">[SYS_VER: 6.0.2]</span>
+            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold">[AUTH: STAFF_ENG]</span>
+            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold">[DATE: {post.date}]</span>
+          </div>
+          <h1 className="font-sans text-[3rem] md:text-[5rem] font-black leading-none uppercase mb-4 reveal-up" style={{ transitionDelay: '100ms' }}>
+            {post.title}
+          </h1>
+          <p className="font-sans text-[2rem] md:text-[3rem] font-bold text-secondary reveal-up" style={{ transitionDelay: '200ms' }}>
+            (AN ENGINEERING LOG)
+          </p>
+        </div>
+      </section>
+
+      {/* Reading Content */}
+      <section className="w-full px-10 py-24 max-w-[1280px] mx-auto grid grid-cols-12 gap-8">
+        
+        {/* Left Metadata Col (Desktop Only) */}
+        <aside className="hidden lg:block col-span-2 border-r-[2px] border-primary pr-6 h-fit sticky top-32">
+          <div className="space-y-8">
+            <div>
+              <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">Category</p>
+              <p className="font-mono text-[12px] uppercase font-bold text-primary">System Architecture</p>
+            </div>
+            <div>
+              <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">Read Time</p>
+              <p className="font-mono text-[12px] uppercase font-bold text-primary">12 Minutes</p>
+            </div>
+            <div>
+              <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">References</p>
+              <div className="space-y-1 text-primary">
+                <p className="font-mono text-[12px]">01. Conway's Law</p>
+                <p className="font-mono text-[12px]">02. YAGNI Principle</p>
+                <p className="font-mono text-[12px]">03. Second System Effect</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content Col */}
+        <article className="col-span-12 lg:col-span-8 lg:col-start-4 space-y-16">
+          
+          {/* Introduction */}
+          <div className="reveal-up">
+            <p className="text-xl leading-relaxed first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-primary">
+              {post.content.split('\n\n')[0] || "Over-engineering is the silent killer of early-stage velocity. In the pursuit of 'scalability' and 'future-proofing,' engineering teams often build complex systems for problems they don't yet have."}
+            </p>
+          </div>
+
+          {/* Callout 1 */}
+          <div className="relative bg-white p-8 border-[2px] border-primary hard-shadow reveal-up">
+            <div className="absolute -top-3 -left-3 reg-mark"></div>
+            <div className="absolute -bottom-3 -right-3 reg-mark"></div>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-error">warning</span>
+              <span className="font-mono text-[12px] font-bold uppercase text-error">[CRITICAL_WARNING]</span>
+            </div>
+            <p className="font-sans font-bold text-lg italic text-primary">
+              The "Scalability Tax" is paid in time, not infrastructure costs. Every hour spent abstracting a service that serves 10 users as if it serves 10 million is an hour stolen from product discovery.
+            </p>
+          </div>
+
+          {/* Body Content */}
+          <div className="space-y-6 reveal-up">
+            <h2 className="font-mono text-[32px] font-bold uppercase border-b-[2px] border-primary pb-2 text-primary">01. THE COMPLEXITY TRAP</h2>
+            <div className="prose prose-zinc prose-lg max-w-none text-primary leading-loose">
+              {post.content.split('\n\n').slice(1).map((paragraph: string, i: number) => (
+                <p key={i} className="mb-6 whitespace-pre-wrap">{paragraph}</p>
+              ))}
+            </div>
+          </div>
+
+          {/* Technical Illustration Image */}
+          <div className="reveal-up">
+            <div className="border-[2px] border-primary p-2 hard-shadow bg-white relative">
+              <img 
+                className="w-full aspect-video object-cover grayscale brightness-90" 
+                alt="Technical architecture diagram" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqfTD7YFlfLbfbN5iDyk1yhZ0ymu083CtdoijsJZFAMo7TJJIolK31rToA08JjKq45c4Lya3VCUsfiNnhmrfZHbXbGm6jrfdbncEssv0AdOFaf_ildENHL-R3xpoFcdJV8hm6BKUT3ZG2EcT8w6vtAik7uWp6JIT2J96z6z5rPmJajg9LUHcb-BdDDhbru_PE3tsGp1YbO3wgXYN3rIH93-ivYDrpI45Sfe3yxCwsXrfGAHxwRH4DS"
+              />
+              <div className="mt-4 flex justify-between items-center px-2">
+                <span className="font-mono text-[10px] text-zinc-500 font-bold uppercase">FIG_01: Complexity Analysis Flowchart</span>
+                <span className="font-mono text-[10px] text-zinc-500 font-bold uppercase">REF_ID: 992-X</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Advice Box */}
+          <div className="bg-primary text-on-primary p-8 hard-shadow reveal-up mt-12">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-on-primary">lightbulb</span>
+              <span className="font-mono text-[12px] font-bold uppercase">[SYSTEM_ADVICE]</span>
+            </div>
+            <h3 className="font-sans font-black text-[24px] mb-4 uppercase">THE ONE-WAY DOOR RULE</h3>
+            <p className="font-sans text-lg opacity-90 leading-relaxed">
+              Only invest in high-complexity abstractions for "one-way door" decisions—architectural choices that are nearly impossible to reverse later. For "two-way doors" (most database schemas, API structures, or hosting providers), choose the simplest possible path and refactor only when the friction becomes unbearable.
+            </p>
+          </div>
+
+          {/* Conclusion */}
+          <div className="pt-12 border-t-[2px] border-primary reveal-up">
+            <p className="font-mono text-[12px] font-bold text-zinc-500 mb-4 uppercase tracking-widest text-center">END OF TRANSMISSION</p>
+            <div className="flex justify-center gap-8 text-primary">
+              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
+              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
+              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
+            </div>
+          </div>
+
+        </article>
+      </section>
+    </>
   );
 }
