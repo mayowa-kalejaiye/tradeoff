@@ -26,7 +26,7 @@ export default async function DashboardPage() {
       {/* Top Navbar */}
       <header className="w-full top-0 sticky z-50 bg-[#ffffff] border-b-[2px] border-[#000000] flex justify-between items-center px-[40px] h-20 max-w-full">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#000000] text-3xl" data-icon="architecture">architecture</span>
+          <img src="/logo.svg" alt="Tradeoff Logo" className="w-8 h-8" />
           <h1 className="font-sans text-[28px] tracking-tighter font-[900] text-[#000000] uppercase mt-1">TRADEOFF // TELEMETRY</h1>
         </div>
         <div className="font-mono text-[12px] leading-[1] font-[700] tracking-widest text-[#5d5f5f] flex items-center gap-2">

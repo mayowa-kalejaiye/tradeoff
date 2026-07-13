@@ -73,7 +73,7 @@ export default function LandingPage() {
       {/* TopAppBar */}
       <header className={`w-full top-0 sticky z-50 bg-white border-b-thick border-primary flex justify-between items-center px-margin-edge h-20 max-w-full transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-3xl" data-icon="architecture">architecture</span>
+          <img src="/logo.svg" alt="Tradeoff Logo" className="w-8 h-8" />
           <h1 className="font-headline-md text-[28px] tracking-tighter font-black text-primary uppercase mt-1">TRADEOFF</h1>
         </div>
         <div className="flex items-center gap-6">

@@ -47,7 +47,7 @@ export default function PrivacyPage() {
       {/* Top Navbar */}
       <header className="w-full top-0 sticky z-50 bg-[#ffffff] border-b-border-thick border-primary flex justify-between items-center px-margin-edge h-20 max-w-full">
         <Link href="/" className="flex items-center gap-3 no-underline">
-          <span className="material-symbols-outlined text-primary text-3xl" data-icon="architecture">architecture</span>
+          <img src="/logo.svg" alt="Tradeoff Logo" className="w-8 h-8" />
           <h1 className="font-sans text-[28px] tracking-tighter font-[900] text-primary uppercase mt-1">TRADEOFF</h1>
         </Link>
         <div className="flex items-center gap-6">

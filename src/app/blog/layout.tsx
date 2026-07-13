@@ -78,7 +78,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         <header className="bg-background border-b-[2px] border-primary sticky top-0 z-50">
           <nav className="flex justify-between items-center w-full px-4 md:px-10 py-4 max-w-[1280px] mx-auto">
             <Link href="/" className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary text-3xl" data-icon="architecture">architecture</span>
+              <img src="/logo.svg" alt="Tradeoff Logo" className="w-8 h-8" />
               <h1 className="font-headline-md text-[24px] md:text-[28px] tracking-tighter font-black text-primary uppercase mt-1">TRADEOFF</h1>
             </Link>
             <div className="flex items-center gap-4 md:gap-6 ml-auto">
