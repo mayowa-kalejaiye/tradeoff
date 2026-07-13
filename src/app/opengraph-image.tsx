@@ -25,19 +25,22 @@ export default function Image() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '60px' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              background: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              border: '4px solid #333333'
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <div style={{ display: 'flex', marginRight: '20px', border: '2px solid #ff291a' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 512 512">
+              <rect width="512" height="512" fill="#000000" />
+              <rect x="128" y="144" width="256" height="64" fill="#ff291a" />
+              <rect x="224" y="144" width="64" height="224" fill="#ff291a" />
+              <line x1="64" y1="64" x2="96" y2="64" stroke="#ffffff" strokeWidth="8" />
+              <line x1="64" y1="64" x2="64" y2="96" stroke="#ffffff" strokeWidth="8" />
+              <line x1="448" y1="64" x2="416" y2="64" stroke="#ffffff" strokeWidth="8" />
+              <line x1="448" y1="64" x2="448" y2="96" stroke="#ffffff" strokeWidth="8" />
+              <line x1="64" y1="448" x2="96" y2="448" stroke="#ffffff" strokeWidth="8" />
+              <line x1="64" y1="448" x2="64" y2="416" stroke="#ffffff" strokeWidth="8" />
+              <line x1="448" y1="448" x2="416" y2="448" stroke="#ffffff" strokeWidth="8" />
+              <line x1="448" y1="448" x2="448" y2="416" stroke="#ffffff" strokeWidth="8" />
+              <line x1="128" y1="176" x2="384" y2="176" stroke="#000000" strokeWidth="4" strokeDasharray="8 8" />
+              <line x1="256" y1="144" x2="256" y2="368" stroke="#000000" strokeWidth="4" strokeDasharray="8 8" />
+            </svg>
           </div>
           <span style={{ fontSize: '42px', fontWeight: 'bold', color: '#e4e4e7', letterSpacing: '-1px', textTransform: 'uppercase' }}>TRADEOFF</span>
         </div>
