@@ -31,7 +31,7 @@ export default function BlogIndex() {
         </div>
 
         {/* Right Column - Sticky Sidebar */}
-        <div className="lg:col-span-5 xl:col-span-4 relative">
+        <div className="lg:col-span-5 xl:col-span-4 relative" id="subscribe">
           <div className="sticky top-32">
             <h3 className="font-mono text-sm font-bold text-secondary uppercase tracking-widest mb-4">
               [ TRANSMISSION.SUBSCRIBE ]

@@ -83,7 +83,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <div className="flex items-center gap-4 md:gap-6 ml-auto">
               <BlogSearch />
-              <Link href="/pricing" className="bg-primary text-on-primary font-label-caps text-[10px] md:text-[12px] font-bold uppercase px-4 md:px-6 py-2 border-[2px] border-primary hover:bg-background hover:text-primary transition-all duration-150 active:translate-x-1 active:translate-y-1 cursor-crosshair-custom inline-block">
+              <Link href="/blog#subscribe" className="bg-primary text-on-primary font-label-caps text-[10px] md:text-[12px] font-bold uppercase px-4 md:px-6 py-2 border-[2px] border-primary hover:bg-background hover:text-primary transition-all duration-150 active:translate-x-1 active:translate-y-1 cursor-crosshair-custom inline-block">
                 SUBSCRIBE
               </Link>
             </div>
