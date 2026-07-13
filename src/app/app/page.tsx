@@ -139,7 +139,7 @@ function HomeEditor() {
       {/* TopAppBar */}
       <header className={`w-full top-0 sticky bg-[#ffffff] border-b-[2px] border-[#000000] flex justify-between items-center px-4 md:px-[40px] h-20 max-w-full z-50 transition-transform duration-300 ease-in-out ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[24px] font-bold text-[#000000] cursor-pointer hover:bg-[#000000] hover:text-[#ffffff] border-[2px] border-transparent hover:border-[#000000] p-1 transition-none">architecture</span>
+          <img src="/logo.svg" alt="Tradeoff Logo" className="w-8 h-8" />
           <div className="font-sans text-[24px] tracking-tighter font-black text-[#000000] uppercase mt-1 hidden sm:block">
             TRADEOFF
           </div>
