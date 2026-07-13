@@ -2,30 +2,38 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { BlogSearch } from '@/components/BlogSearch';
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   
   useEffect(() => {
-    // Reveal animation on scroll
-    const observerOptions = {
-      threshold: 0.1
-    };
+    // Reveal animation on scroll (needs a tiny delay for Next.js soft navs to render the DOM)
+    let timeoutId = setTimeout(() => {
+      const observerOptions = {
+        threshold: 0.1
+      };
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
-    }, observerOptions);
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, observerOptions);
 
-    const elements = document.querySelectorAll('.reveal-up');
-    elements.forEach(el => observer.observe(el));
+      const elements = document.querySelectorAll('.reveal-up');
+      elements.forEach(el => observer.observe(el));
 
-    return () => {
-      elements.forEach(el => observer.unobserve(el));
-    };
-  }, []);
+      return () => {
+        elements.forEach(el => observer.unobserve(el));
+      };
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex flex-col font-body-md text-on-background selection:bg-primary selection:text-on-primary">
@@ -68,19 +76,14 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       <div className="blog-wrapper flex-1 flex flex-col">
         {/* TopNavBar */}
         <header className="bg-background border-b-[2px] border-primary sticky top-0 z-50">
-          <nav className="flex justify-between items-center w-full px-10 py-4 max-w-[1280px] mx-auto">
-            <Link href="/" className="font-headline-lg text-[24px] tracking-tighter text-primary font-black uppercase">
-              TRADEOFF.SYS
+          <nav className="flex justify-between items-center w-full px-4 md:px-10 py-4 max-w-[1280px] mx-auto">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-3xl" data-icon="architecture">architecture</span>
+              <h1 className="font-headline-md text-[24px] md:text-[28px] tracking-tighter font-black text-primary uppercase mt-1">TRADEOFF</h1>
             </Link>
-            <div className="hidden md:flex gap-8 items-center">
-              <Link className="font-label-caps text-[12px] uppercase text-secondary hover:bg-primary hover:text-on-primary transition-colors duration-150 px-2 py-1 cursor-crosshair-custom" href="/blog">ARCHIVE</Link>
-              <Link className="font-label-caps text-[12px] uppercase text-primary underline decoration-2 underline-offset-4 px-2 py-1 cursor-crosshair-custom" href="/blog">LOGS</Link>
-              <Link className="font-label-caps text-[12px] uppercase text-secondary hover:bg-primary hover:text-on-primary transition-colors duration-150 px-2 py-1 cursor-crosshair-custom" href="/methodology">MANIFESTO</Link>
-              <Link className="font-label-caps text-[12px] uppercase text-secondary hover:bg-primary hover:text-on-primary transition-colors duration-150 px-2 py-1 cursor-crosshair-custom" href="/app">BLUEPRINTS</Link>
-            </div>
-            <div className="flex items-center gap-6">
-              <button className="material-symbols-outlined text-primary cursor-crosshair-custom">search</button>
-              <Link href="/pricing" className="bg-primary text-on-primary font-label-caps text-[12px] font-bold uppercase px-6 py-2 border-[2px] border-primary hover:bg-background hover:text-primary transition-all duration-150 active:translate-x-1 active:translate-y-1 cursor-crosshair-custom inline-block">
+            <div className="flex items-center gap-4 md:gap-6 ml-auto">
+              <BlogSearch />
+              <Link href="/pricing" className="bg-primary text-on-primary font-label-caps text-[10px] md:text-[12px] font-bold uppercase px-4 md:px-6 py-2 border-[2px] border-primary hover:bg-background hover:text-primary transition-all duration-150 active:translate-x-1 active:translate-y-1 cursor-crosshair-custom inline-block">
                 SUBSCRIBE
               </Link>
             </div>
@@ -104,25 +107,25 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
               <div>
                 <h4 className="font-label-caps text-[12px] font-bold uppercase mb-6 text-primary-fixed-dim">NAVIGATE</h4>
                 <div className="flex flex-col gap-3">
-                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="/app">TERMINAL</Link>
-                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="#">ERRORS</Link>
-                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="#">STATUS</Link>
+                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="/app">APP</Link>
+                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="/blog">BLOG</Link>
+                  <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="/pricing">PRICING</Link>
                   <Link className="font-mono text-[12px] hover:text-surface-bright transition-colors cursor-pointer uppercase" href="/privacy">PRIVACY</Link>
                 </div>
               </div>
               <div>
                 <h4 className="font-label-caps text-[12px] font-bold uppercase mb-6 text-primary-fixed-dim">SYSTEM</h4>
                 <div className="font-mono text-[12px] space-y-2 uppercase opacity-80">
-                  <p>NODE: 44.11.0.1</p>
-                  <p>STATUS: OPERATIONAL</p>
+                  <p>NODE: v6.0.2-STABLE</p>
+                  <p>STATUS: ACTIVE</p>
                   <p>LOAD: 0.22%</p>
                 </div>
               </div>
             </div>
           </div>
-          <div className="w-full px-10 py-6 border-t border-on-primary/20 max-w-[1280px] mx-auto flex justify-between items-center opacity-60">
-            <span className="font-mono text-[10px]">©2026 TRADEOFF_ENGINEERING. ALL RIGHTS RESERVED.</span>
-            <span className="font-mono text-[10px]">DESIGN_SPEC: BRUTAL_V1</span>
+          <div className="w-full px-10 py-6 border-t border-on-primary/20 max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center opacity-60 gap-4">
+            <span className="font-mono text-[10px] text-center">© {new Date().getFullYear()} TRADEOFF_ENGINEERING. ALL RIGHTS RESERVED.</span>
+            <span className="font-mono text-[10px]">DESIGN_SPEC: SYS.REV.06</span>
           </div>
         </footer>
       </div>

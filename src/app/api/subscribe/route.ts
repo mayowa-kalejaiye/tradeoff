@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/db';
+import { subscribers } from '@/db/schema';
 
 export async function POST(request: Request) {
   try {
@@ -8,31 +10,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    // Integrate with Sendbyte.africa API
-    // Using generic REST convention as specified
-    const SENDBYTE_API_KEY = process.env.SENDBYTE_API_KEY || 'test_key';
-    
-    // Attempting connection to sendbyte.africa API
-    const response = await fetch('https://api.sendbyte.africa/v1/subscribers', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SENDBYTE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email,
-        list_id: 'tradeoff_waitlist',
+    try {
+      await db.insert(subscribers).values({
+        email: email.toLowerCase(),
         source: 'landing_page'
-      })
-    });
-
-    if (!response.ok) {
-      console.error(`Sendbyte.africa API error: ${response.statusText}`);
-      // Fallback for development/testing if API key is invalid or endpoint mock fails
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('DEV MODE: Mocking successful subscription to sendbyte.africa');
-        return NextResponse.json({ success: true, mocked: true });
+      });
+    } catch (dbError: any) {
+      // Postgres unique constraint violation code
+      if (dbError.code === '23505') {
+        // We can just pretend it succeeded so we don't leak information, or we can let them know.
+        // Usually returning success is fine for subscriptions.
+        return NextResponse.json({ success: true, message: 'Already subscribed' });
       }
+      console.error('Database insertion error:', dbError);
       return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 });
     }
 

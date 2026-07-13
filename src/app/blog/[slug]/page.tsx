@@ -1,46 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { WebGLBackground } from '@/components/WebGLBackground';
-
-// Mock database for now
-const POSTS: Record<string, any> = {
-  'why-most-startups-overengineer': {
-    title: 'Why Most Startups Over-Engineer (And How to Avoid It)',
-    date: '2026-07-08',
-    content: `
-# Why You Don't Need Kubernetes
-
-It's the classic founder trap. You're building a simple B2B SaaS, and instead of focusing on product-market fit, you're designing a multi-region, active-active microservices architecture on Kubernetes. 
-
-Your competitor, meanwhile, shipped their MVP on a single VPS with Postgres and is now actively talking to users.
-
-### The Cost of Premature Scaling
-
-The tradeoff is simple: flexibility and extreme scalability come at the cost of **developer velocity**. Every abstraction you add is another layer you have to maintain, debug, and reason about.
-
-When you're small, your biggest risk isn't scaling to millions of users; it's running out of runway before anyone cares.
-
-**Pragmatic Stack Recommendation:**
-- Frontend: Next.js or standard React
-- Backend: Monolith (Node/Python/Go)
-- Database: Postgres (managed)
-    `
-  },
-  'the-true-cost-of-microservices': {
-    title: 'The True Cost of Microservices for Early Stage Teams',
-    date: '2026-06-15',
-    content: `
-# Conway's Law in Action
-
-Microservices are often treated as a technical solution, but they are actually an **organizational** solution. They allow independent teams to deploy independently. 
-
-If you are a team of 3 engineers, microservices will only slow you down.
-
-### When to break the monolith?
-Only when the pain of coordinating deployments across 20+ engineers outweighs the network overhead, distributed tracing complexity, and debugging nightmares of microservices.
-    `
-  }
-};
+import ReactMarkdown from 'react-markdown';
+import { CodeBlock } from '@/components/CodeBlock';
+import { POSTS, BLOG_LIST } from '@/lib/blog-data';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -48,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return { title: 'Post Not Found' };
   return {
     title: `${post.title} | Tradeoff Blog`,
-    description: post.content.substring(0, 150) + '...',
+    description: post.excerpt,
   };
 }
 
@@ -60,6 +23,11 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
+  // Find previous and next posts
+  const currentIndex = BLOG_LIST.findIndex(p => p.slug === slug);
+  const nextPost = currentIndex > 0 ? BLOG_LIST[currentIndex - 1] : null; // Because list is sorted newest first
+  const prevPost = currentIndex < BLOG_LIST.length - 1 ? BLOG_LIST[currentIndex + 1] : null;
+
   return (
     <>
       {/* Hero Section */}
@@ -67,41 +35,45 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
         <div className="absolute inset-0 z-0">
           <WebGLBackground />
         </div>
-        <div className="relative z-10 w-full px-10 py-20 max-w-[1280px] mx-auto">
+        <div className="relative z-10 w-full px-4 md:px-10 py-20 max-w-[1280px] mx-auto">
           <div className="flex flex-wrap gap-4 mb-12 reveal-up">
+            <Link href="/blog" className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-on-primary transition-colors cursor-crosshair-custom flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+              [BACK]
+            </Link>
             <span className="font-mono text-[12px] bg-primary text-on-primary px-3 py-1">[SYS_VER: 6.0.2]</span>
-            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold">[AUTH: STAFF_ENG]</span>
-            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold">[DATE: {post.date}]</span>
+            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold bg-background/80 backdrop-blur-sm">[AUTH: STAFF_ENG]</span>
+            <span className="font-mono text-[12px] border-[2px] border-primary px-3 py-1 font-bold bg-background/80 backdrop-blur-sm">[DATE: {post.date}]</span>
           </div>
-          <h1 className="font-sans text-[3rem] md:text-[5rem] font-black leading-none uppercase mb-4 reveal-up" style={{ transitionDelay: '100ms' }}>
+          <h1 className="font-sans text-[2.5rem] md:text-[5rem] font-black leading-none uppercase mb-4 reveal-up" style={{ transitionDelay: '100ms' }}>
             {post.title}
           </h1>
-          <p className="font-sans text-[2rem] md:text-[3rem] font-bold text-secondary reveal-up" style={{ transitionDelay: '200ms' }}>
-            (AN ENGINEERING LOG)
+          <p className="font-sans text-[1.5rem] md:text-[3rem] font-bold text-secondary reveal-up" style={{ transitionDelay: '200ms' }}>
+            {post.subtitle || '(AN ENGINEERING LOG)'}
           </p>
         </div>
       </section>
 
       {/* Reading Content */}
-      <section className="w-full px-10 py-24 max-w-[1280px] mx-auto grid grid-cols-12 gap-8">
+      <section className="w-full px-4 md:px-10 py-24 max-w-[1280px] mx-auto grid grid-cols-12 gap-8">
         
         {/* Left Metadata Col (Desktop Only) */}
         <aside className="hidden lg:block col-span-2 border-r-[2px] border-primary pr-6 h-fit sticky top-32">
           <div className="space-y-8">
             <div>
               <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">Category</p>
-              <p className="font-mono text-[12px] uppercase font-bold text-primary">System Architecture</p>
+              <p className="font-mono text-[12px] uppercase font-bold text-primary">{post.category}</p>
             </div>
             <div>
               <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">Read Time</p>
-              <p className="font-mono text-[12px] uppercase font-bold text-primary">12 Minutes</p>
+              <p className="font-mono text-[12px] uppercase font-bold text-primary">{post.readTime}</p>
             </div>
             <div>
               <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">References</p>
               <div className="space-y-1 text-primary">
-                <p className="font-mono text-[12px]">01. Conway's Law</p>
-                <p className="font-mono text-[12px]">02. YAGNI Principle</p>
-                <p className="font-mono text-[12px]">03. Second System Effect</p>
+                {post.references.map((ref, idx) => (
+                  <p key={idx} className="font-mono text-[12px]">{ref}</p>
+                ))}
               </div>
             </div>
           </div>
@@ -112,8 +84,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           
           {/* Introduction */}
           <div className="reveal-up">
-            <p className="text-xl leading-relaxed first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-primary">
-              {post.content.split('\n\n')[0] || "Over-engineering is the silent killer of early-stage velocity. In the pursuit of 'scalability' and 'future-proofing,' engineering teams often build complex systems for problems they don't yet have."}
+            <p className="text-[18px] md:text-[20px] leading-relaxed first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-primary">
+              {post.content.split('\n\n')[0]}
             </p>
           </div>
 
@@ -132,48 +104,73 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
           {/* Body Content */}
           <div className="space-y-6 reveal-up">
-            <h2 className="font-mono text-[32px] font-bold uppercase border-b-[2px] border-primary pb-2 text-primary">01. THE COMPLEXITY TRAP</h2>
-            <div className="prose prose-zinc prose-lg max-w-none text-primary leading-loose">
-              {post.content.split('\n\n').slice(1).map((paragraph: string, i: number) => (
-                <p key={i} className="mb-6 whitespace-pre-wrap">{paragraph}</p>
-              ))}
-            </div>
-          </div>
-
-          {/* Technical Illustration Image */}
-          <div className="reveal-up">
-            <div className="border-[2px] border-primary p-2 hard-shadow bg-white relative">
-              <img 
-                className="w-full aspect-video object-cover grayscale brightness-90" 
-                alt="Technical architecture diagram" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqfTD7YFlfLbfbN5iDyk1yhZ0ymu083CtdoijsJZFAMo7TJJIolK31rToA08JjKq45c4Lya3VCUsfiNnhmrfZHbXbGm6jrfdbncEssv0AdOFaf_ildENHL-R3xpoFcdJV8hm6BKUT3ZG2EcT8w6vtAik7uWp6JIT2J96z6z5rPmJajg9LUHcb-BdDDhbru_PE3tsGp1YbO3wgXYN3rIH93-ivYDrpI45Sfe3yxCwsXrfGAHxwRH4DS"
-              />
-              <div className="mt-4 flex justify-between items-center px-2">
-                <span className="font-mono text-[10px] text-zinc-500 font-bold uppercase">FIG_01: Complexity Analysis Flowchart</span>
-                <span className="font-mono text-[10px] text-zinc-500 font-bold uppercase">REF_ID: 992-X</span>
-              </div>
+            <div className="brutalist-prose max-w-none w-full">
+              <ReactMarkdown
+                components={{
+                  code(props: any) {
+                    const { children, className, node, ...rest } = props;
+                    const match = /language-(\w+)/.exec(className || '');
+                    return match ? (
+                      <CodeBlock language={match[1]} code={String(children).replace(/\n$/, '')} />
+                    ) : (
+                      <code className={className} {...rest}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {post.content.substring(post.content.indexOf('\n\n') + 2)}
+              </ReactMarkdown>
             </div>
           </div>
 
           {/* Advice Box */}
-          <div className="bg-primary text-on-primary p-8 hard-shadow reveal-up mt-12">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="material-symbols-outlined text-on-primary">lightbulb</span>
-              <span className="font-mono text-[12px] font-bold uppercase">[SYSTEM_ADVICE]</span>
+          {post.systemAdvice && (
+            <div className="bg-primary text-on-primary p-8 hard-shadow reveal-up mt-12">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-on-primary">lightbulb</span>
+                <span className="font-mono text-[12px] font-bold uppercase">[SYSTEM_ADVICE]</span>
+              </div>
+              <h3 className="font-sans font-black text-[24px] mb-4 uppercase">{post.systemAdvice.title}</h3>
+              <p className="font-sans text-lg opacity-90 leading-relaxed">
+                {post.systemAdvice.text}
+              </p>
             </div>
-            <h3 className="font-sans font-black text-[24px] mb-4 uppercase">THE ONE-WAY DOOR RULE</h3>
-            <p className="font-sans text-lg opacity-90 leading-relaxed">
-              Only invest in high-complexity abstractions for "one-way door" decisions—architectural choices that are nearly impossible to reverse later. For "two-way doors" (most database schemas, API structures, or hosting providers), choose the simplest possible path and refactor only when the friction becomes unbearable.
-            </p>
-          </div>
+          )}
 
           {/* Conclusion */}
           <div className="pt-12 border-t-[2px] border-primary reveal-up">
             <p className="font-mono text-[12px] font-bold text-zinc-500 mb-4 uppercase tracking-widest text-center">END OF TRANSMISSION</p>
             <div className="flex justify-center gap-8 text-primary">
-              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
-              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
-              <div className="w-8 h-8 border-[2px] border-primary flex items-center justify-center font-black">+</div>
+              
+              {/* Prev Button */}
+              {prevPost ? (
+                <Link href={`/blog/${prevPost.slug}`} className="w-10 h-10 border-[2px] border-primary flex items-center justify-center font-black hover:bg-primary hover:text-white transition-colors cursor-crosshair-custom text-xl" title="Previous Post">
+                  +
+                </Link>
+              ) : (
+                <div className="w-10 h-10 border-[2px] border-primary/30 text-primary/30 flex items-center justify-center font-black cursor-not-allowed text-xl">
+                  +
+                </div>
+              )}
+
+              {/* Index Button */}
+              <Link href="/blog" className="w-10 h-10 border-[2px] border-primary flex items-center justify-center font-black hover:bg-primary hover:text-white transition-colors cursor-crosshair-custom text-xl" title="All Posts">
+                -
+              </Link>
+              
+              {/* Next Button */}
+              {nextPost ? (
+                <Link href={`/blog/${nextPost.slug}`} className="w-10 h-10 border-[2px] border-primary flex items-center justify-center font-black hover:bg-primary hover:text-white transition-colors cursor-crosshair-custom text-xl" title="Next Post">
+                  +
+                </Link>
+              ) : (
+                <div className="w-10 h-10 border-[2px] border-primary/30 text-primary/30 flex items-center justify-center font-black cursor-not-allowed text-xl">
+                  +
+                </div>
+              )}
+              
             </div>
           </div>
 

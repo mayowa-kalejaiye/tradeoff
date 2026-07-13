@@ -48,3 +48,10 @@ export const engineUpdates = pgTable("engine_updates", {
   description: varchar("description", { length: 500 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const subscribers = pgTable("subscribers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  source: varchar("source", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
