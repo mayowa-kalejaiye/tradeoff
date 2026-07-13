@@ -71,7 +71,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             <div>
               <p className="font-mono text-[10px] text-zinc-500 mb-2 uppercase font-bold">References</p>
               <div className="space-y-1 text-primary">
-                {post.references.map((ref, idx) => (
+                {post.references.map((ref: string, idx: number) => (
                   <p key={idx} className="font-mono text-[12px]">{ref}</p>
                 ))}
               </div>
