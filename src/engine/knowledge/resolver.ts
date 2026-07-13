@@ -166,18 +166,18 @@ export function resolveGraph(
   const matchCap = (pattern: string) => {
     if (pattern.endsWith('.*')) {
       const prefix = pattern.slice(0, -2);
-      return extractedCaps.some(c => c.id.startsWith(prefix));
+      return extractedCaps.some(c => (c.id || c.name || '').startsWith(prefix));
     }
-    return extractedCaps.some(c => c.id === pattern);
+    return extractedCaps.some(c => (c.id || c.name) === pattern);
   };
 
   const getCapScore = (pattern: string) => {
     if (pattern.endsWith('.*')) {
       const prefix = pattern.slice(0, -2);
-      const matches = extractedCaps.filter(c => c.id.startsWith(prefix));
+      const matches = extractedCaps.filter(c => (c.id || c.name || '').startsWith(prefix));
       return matches.length > 0 ? Math.max(...matches.map(m => m.score)) : 0;
     }
-    const match = extractedCaps.find(c => c.id === pattern);
+    const match = extractedCaps.find(c => (c.id || c.name) === pattern);
     return match ? match.score : 0;
   };
 
