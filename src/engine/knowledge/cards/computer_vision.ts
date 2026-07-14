@@ -99,8 +99,8 @@ const slam: DecisionNode = {
 const objectStorage: DecisionNode = {
   id: 'object_storage',
   type: 'Implementation',
-  name: 'Object Storage for Sensor Recordings',
-  description: 'Blob storage for massive visual telemetry logs',
+  name: 'Object Storage',
+  description: 'Blob storage for massive unstructured data or binary assets',
   systemGroup: 'data_pipeline',
   capability: 'telemetry_storage',
   kind: 'rule',

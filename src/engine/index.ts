@@ -67,7 +67,7 @@ const domainHandlers: Partial<Record<string, KnowledgeProvider>> = {
 };
 
 // Graph registry
-const graphRegistry: Record<string, any> = {
+export const graphRegistry: Record<string, any> = {
   marketplace: marketplaceGraph,
   robotics: roboticsGraph,
   computer_vision: computerVisionGraph,

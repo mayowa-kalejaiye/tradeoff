@@ -10,6 +10,7 @@ export const fleetManagementGraph: DecisionGraph = {
       description: 'Centralized administration system for tracking and orchestrating geographically distributed devices.',
       systemGroup: 'cloud_platform',
       capability: 'Fleet Control',
+      eligibility: { anyOf: ['robotics.*', 'iot.*', 'industrial.*'] },
       kind: 'rule',
       strength: 'critical',
       gains: [
@@ -38,6 +39,7 @@ export const fleetManagementGraph: DecisionGraph = {
       description: 'Secure registry containing device identities, cryptographic keys, and current expected state (digital twin).',
       systemGroup: 'fleet_comms',
       capability: 'Device Identity',
+      eligibility: { anyOf: ['robotics.*', 'iot.*', 'industrial.*'] },
       kind: 'fact',
       strength: 'critical',
       gains: [
@@ -73,6 +75,7 @@ export const fleetManagementGraph: DecisionGraph = {
       operationalCost: 'Medium',
 
       eligibility: {
+        anyOf: ['robotics.*', 'iot.*', 'industrial.*', 'communication.device.*'],
         noneOf: ['ultra_low_latency', 'financial_critical'], // Blocks it from HFT!
       },
       applicability: {
@@ -112,6 +115,7 @@ export const fleetManagementGraph: DecisionGraph = {
       description: 'Infrastructure to deliver, verify, and apply software and firmware updates remotely.',
       systemGroup: 'fleet_comms',
       capability: 'Software Distribution',
+      eligibility: { anyOf: ['robotics.*', 'iot.*', 'industrial.*'] },
       kind: 'rule',
       strength: 'critical',
       gains: [
@@ -141,6 +145,7 @@ export const fleetManagementGraph: DecisionGraph = {
       description: 'Staged deployment of OTA updates to a small subset of the fleet before broad distribution.',
       systemGroup: 'fleet_comms',
       capability: 'Safe Deployment',
+      eligibility: { anyOf: ['robotics.*', 'iot.*', 'industrial.*'] },
       kind: 'heuristic',
       strength: 'strongly_recommended',
       gains: [

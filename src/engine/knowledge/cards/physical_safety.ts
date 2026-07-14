@@ -10,6 +10,7 @@ export const physicalSafetyGraph: DecisionGraph = {
       description: 'Hardware or software mechanism to immediately halt physical motion and cut power to actuators.',
       systemGroup: 'safety_systems',
       capability: 'physical_safety',
+      eligibility: { anyOf: ['safety_critical.*', 'robotics.*', 'industrial.*'] },
       kind: 'rule',
       strength: 'critical',
       gains: [
@@ -43,6 +44,7 @@ export const physicalSafetyGraph: DecisionGraph = {
       description: 'Allows a human operator to take over control of the physical system in edge cases.',
       systemGroup: 'fleet_comms',
       capability: 'remote_control',
+      eligibility: { anyOf: ['safety_critical.*', 'robotics.*', 'industrial.*'] },
       kind: 'heuristic',
       strength: 'strongly_recommended',
       gains: [
@@ -73,6 +75,7 @@ export const physicalSafetyGraph: DecisionGraph = {
       description: 'A formally verifiable state machine ensuring the system can only transition to known safe states during anomalies.',
       systemGroup: 'safety_systems',
       capability: 'logic_verification',
+      eligibility: { anyOf: ['safety_critical.*', 'robotics.*', 'industrial.*'] },
       kind: 'rule',
       strength: 'critical',
       gains: [
@@ -107,6 +110,7 @@ export const physicalSafetyGraph: DecisionGraph = {
       description: 'Real-time obstacle detection and automated path adjustment to prevent physical impacts.',
       systemGroup: 'edge_runtime',
       capability: 'spatial_awareness',
+      eligibility: { anyOf: ['safety_critical.*', 'robotics.*', 'industrial.*'] },
       kind: 'heuristic',
       strength: 'critical',
       gains: [
@@ -139,10 +143,11 @@ export const physicalSafetyGraph: DecisionGraph = {
       id: 'elevator_reservation',
       type: 'Capability',
       name: 'Elevator/Choke-point Reservation',
-      description: 'Protocol to reserve shared infrastructure like elevators or narrow hallways to prevent robot deadlocks.',
+      description: 'Distributed locking or reservation system to manage shared physical bottlenecks.',
       systemGroup: 'fleet_comms',
-      capability: 'fleet_orchestration',
-      kind: 'rule',
+      capability: 'fleet_coordination',
+      eligibility: { anyOf: ['safety_critical.*', 'robotics.*', 'industrial.*'] },
+      kind: 'heuristic',
       strength: 'recommended',
       gains: [
         'Prevents physical deadlocks in confined spaces',

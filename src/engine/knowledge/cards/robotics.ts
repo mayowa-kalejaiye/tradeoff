@@ -93,6 +93,7 @@ export const roboticsGraph: DecisionGraph = {
       
       engineeringComplexity: 'Medium',
       operationalCost: 'Low',
+      eligibility: { anyOf: ['robotics.*', 'iot.*', 'industrial.*', 'communication.device.*'] },
       
       winsWhen: [
         'Robots disconnect frequently (hospital WiFi dead zones).',

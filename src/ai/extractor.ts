@@ -15,7 +15,7 @@ const extractionSchema = z.object({
   capabilities: z.array(z.object({
     name: z.string(),
     score: z.number().min(0).max(100).describe('Confidence score from 0 to 100 indicating how strongly the user needs this capability.')
-  })).describe('The core software capabilities explicitly or implicitly required by this project (e.g., "reliable_messaging", "offline_sync", "robot_coordination", "computer_vision", "fleet_management").'),
+  })).describe('The core software capabilities explicitly or implicitly required by this project. CRITICAL: You MUST use dot-notation namespaces (e.g., "communication.robot", "communication.browser", "data.sync.offline", "ai.agent_orchestration"). NEVER use generic tags like "realtime" or "communication" alone.'),
   teamScale: z.enum(['solo', 'small', 'medium', 'enterprise']).describe('The scale of the team building this. Solo = 1, Small = 2-10, Medium = 11-50, Enterprise = 50+'),
   teamSize: z.number().describe('The number of developers working on the project. Default to 1 if unknown or solo.'),
   runwayMonths: z.number().optional().describe('Estimated runway in months if mentioned. Empty if unknown.'),
@@ -46,7 +46,8 @@ export async function extractArchitectureInput(prompt: string): Promise<Extracti
       Read carefully between the lines. If they say "I don't know how to code but I'm building this with Claude", their technicalExperience is "vibe_coder".
       If they say "we are a team of 3 trying to launch an MVP this week", their priority is "speed".
 
-      CRITICAL: You must extract the underlying 'intent' (what they are optimizing for) and the required 'capabilities' (e.g., reliable_messaging, offline_sync). Do NOT think in terms of industry verticals; think in terms of engineering capabilities required to build it.
+      CRITICAL: You must extract the underlying 'intent' (what they are optimizing for) and the required 'capabilities'.
+      CRITICAL: For capabilities, you MUST namespace them to avoid leaking across domains (e.g., "communication.robot", "communication.browser", "data.sync.offline"). DO NOT use generic tags like "realtime" or "communication" as they cause catastrophic graph leakage.
 
       CRITICAL: If they mention a user count (e.g. 300,000) but do NOT explicitly say if it is concurrent, MAU, or registered, you MUST set userMetric to "unknown". Do not guess.
 
@@ -62,14 +63,14 @@ export async function extractArchitectureInput(prompt: string): Promise<Extracti
   const deterministicCaps: { name: string, score: number, source: 'llm'|'deterministic' }[] = [];
   
   if (p.includes('websocket') || p.includes('realtime') || p.includes('chat')) {
-    deterministicCaps.push({ name: 'realtime_events', score: 100, source: 'deterministic' });
+    deterministicCaps.push({ name: 'communication.realtime.browser', score: 100, source: 'deterministic' });
   }
   if (p.includes('robot') || p.includes('agv') || p.includes('drone')) {
-    deterministicCaps.push({ name: 'robot_middleware', score: 100, source: 'deterministic' });
-    deterministicCaps.push({ name: 'fleet_coordination', score: 100, source: 'deterministic' });
+    deterministicCaps.push({ name: 'robotics.middleware', score: 100, source: 'deterministic' });
+    deterministicCaps.push({ name: 'robotics.fleet_coordination', score: 100, source: 'deterministic' });
   }
   if (p.includes('offline') || p.includes('no internet')) {
-    deterministicCaps.push({ name: 'offline_sync', score: 100, source: 'deterministic' });
+    deterministicCaps.push({ name: 'data.sync.offline', score: 100, source: 'deterministic' });
   }
   
   const mergedCapabilities = [

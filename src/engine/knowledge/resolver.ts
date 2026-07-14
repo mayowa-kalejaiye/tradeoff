@@ -438,9 +438,13 @@ export function resolveGraph(
       principles.push("Favor standard patterns for predictability."); // Fallback principle
     }
 
-    // 9. Attach Scoring Signals
+    // 9. Attach Scoring Signals and Node-Specific Evidence
     const scoringEvidence = nodeEvidence.get(winner.id) || [];
-    const combinedEvidence = [...evidence, ...scoringEvidence];
+    const winsWhenEvidence = (winner.node.winsWhen || []).map(w => `Wins when: ${w}`);
+    
+    // We filter the global 'evidence' so we don't spam it. 
+    // Actually, just append it all, but put node-specific reasons first.
+    const combinedEvidence = [...scoringEvidence, ...winsWhenEvidence, ...evidence];
 
     const rationale = `Because the system requires ${cap.replace(/_/g, ' ')}, ${winner.node.name} is the optimal choice.`;
 
