@@ -156,7 +156,7 @@ function HomeEditor() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full lg:w-1/3 border-b-[2px] lg:border-b-0 lg:border-r-[2px] border-[#000000] flex flex-col bg-[#ffffff] relative min-h-[500px] lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] overflow-y-auto"
+          className="w-full lg:w-1/3 border-b-[2px] lg:border-b-0 lg:border-r-[2px] border-[#000000] flex flex-col bg-[#ffffff] relative min-h-[500px] lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] overflow-y-auto print:hidden"
         >
           <div className="absolute top-2 left-2 text-[#000000] font-mono text-[14px] opacity-30 pointer-events-none">+</div>
           <div className="absolute top-2 right-2 text-[#000000] font-mono text-[14px] opacity-30 pointer-events-none">+</div>
@@ -211,7 +211,7 @@ function HomeEditor() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-          className="w-full lg:w-2/3 bg-[#f9f9f9] flex flex-col p-4 md:p-[40px] gap-6 md:gap-[40px] relative blueprint-bg min-h-screen"
+          className="w-full lg:w-2/3 bg-[#f9f9f9] flex flex-col p-4 md:p-[40px] gap-6 md:gap-[40px] relative blueprint-bg min-h-screen print:w-full print:p-0 print:m-0"
         >
           {/* Canvas Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b-[2px] border-[#000000] pb-4 bg-[#ffffff] border-[2px] p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10 gap-4 sm:gap-0">
@@ -312,6 +312,7 @@ function HomeEditor() {
                   inputCapabilities={result.inputCapabilities} 
                   reviewId={result.reviewId}
                   onExportMarkdown={handleExport}
+                  rawPrompt={prompt}
                 />
               </motion.div>
             )}

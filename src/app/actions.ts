@@ -59,7 +59,7 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
       status: 'started',
       promptLength: prompt.length,
     }).returning({ id: architectureReviews.id });
-    
+
     if (newRecord.length > 0) {
       recordId = newRecord[0].id;
     }
@@ -104,9 +104,9 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
         }).where(eq(architectureReviews.id, recordId));
       }
 
-      return { 
-        status: 'error', 
-        message: 'I can only analyze software projects. Please describe a specific application, system, or platform you want to build.' 
+      return {
+        status: 'error',
+        message: 'I can only analyze software projects. Please describe a specific application, system, or platform you want to build.'
       };
     }
 
@@ -116,7 +116,7 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
     // Merge the AI usage from the adaptation step
     const adaptationInputTokens = output.usage?.promptTokens || 0;
     const adaptationOutputTokens = output.usage?.completionTokens || 0;
-    
+
     const finalInputTokens = inputTokens + adaptationInputTokens;
     const finalOutputTokens = outputTokens + adaptationOutputTokens;
     const finalTotalCost = (finalInputTokens / 1000000) * 0.075 + (finalOutputTokens / 1000000) * 0.30;
@@ -156,7 +156,7 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
     return clientOutput;
   } catch (error: any) {
     console.error('Error processing architecture request:', error);
-    
+
     // Extract the real underlying database error cause if it's a Drizzle error
     let errorMessage = error instanceof Error ? error.message : String(error);
     if (error.cause && error.cause.message) {
@@ -166,7 +166,7 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
     }
 
     const generationTimeMs = Date.now() - startTime;
-    
+
     if (recordId) {
       await db.update(architectureReviews).set({
         status: 'error',
@@ -183,9 +183,9 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
 
     // Catch rate limit errors from Gemini API
     if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
-      return { 
-        status: 'error', 
-        message: 'Wow, we are getting a lot of traffic right now! The AI engine is taking a quick breather. Please try again in 10 seconds.' 
+      return {
+        status: 'error',
+        message: 'Wow, we are getting a lot of traffic right now! The engine is taking a quick breather. Please try again in 10 seconds.'
       };
     }
 
@@ -199,7 +199,7 @@ export async function getReviewInputById(id: string) {
       .from(architectureReviews)
       .where(eq(architectureReviews.id, id))
       .limit(1);
-    
+
     if (result.length > 0 && result[0].rawInput) {
       const parsedInput = result[0].rawInput as any;
       return parsedInput.brief || parsedInput.projectIdea || null;

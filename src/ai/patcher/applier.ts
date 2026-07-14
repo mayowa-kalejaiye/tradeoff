@@ -171,6 +171,11 @@ export function applyPatches(
   // Generate Deterministic Architecture Diagram
   output.architectureDiagram = generateMermaidDiagram(activeGraph);
 
+  // Assign LLM-generated Principal Critique
+  if (adaptation.principalCritique) {
+    output.principalCritique = adaptation.principalCritique;
+  }
+
   return output;
 }
 

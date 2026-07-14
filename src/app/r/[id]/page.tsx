@@ -56,6 +56,7 @@ export default async function PublicReviewPage({
   const data = review.rawOutput as ArchitectureOutput;
   const rawInput = review.rawInput as any;
   const inputArchetypes = rawInput?.archetypes || [];
+  const rawPrompt = rawInput?.brief || '';
 
   return (
     <div className="min-h-screen bg-white">
@@ -78,7 +79,7 @@ export default async function PublicReviewPage({
       </div>
 
       <div className="max-w-4xl mx-auto py-8">
-        <ReviewMemo data={data} inputCapabilities={inputArchetypes.map((a: any) => ({...a, source: 'llm'}))} debugMode={isDebugMode} />
+        <ReviewMemo data={data} inputCapabilities={inputArchetypes.map((a: any) => ({...a, source: 'llm'}))} debugMode={isDebugMode} rawPrompt={rawPrompt} />
       </div>
     </div>
   );

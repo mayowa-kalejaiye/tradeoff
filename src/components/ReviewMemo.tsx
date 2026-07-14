@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { ArchitectureOutput } from '@/engine/types';
+import { Mermaid } from './Mermaid';
 
 interface ReviewMemoProps {
   data: ArchitectureOutput;
@@ -9,9 +11,10 @@ interface ReviewMemoProps {
   reviewId?: string;
   onExportMarkdown?: () => void;
   debugMode?: boolean;
+  rawPrompt?: string;
 }
 
-export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: ReviewMemoProps) {
+export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode, rawPrompt }: ReviewMemoProps) {
   const [copyState, setCopyState] = useState<'IDLE' | 'COPIED'>('IDLE');
 
   const handleCopyLink = async () => {
@@ -32,6 +35,18 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: Revi
 
   return (
     <div className="flex flex-col gap-8 w-full">
+      {/* Print-Only Request Prompt */}
+      {rawPrompt && (
+        <div className="hidden print:block mb-8">
+          <div className="font-mono text-[10px] sm:text-[12px] font-bold border-b-[2px] border-[#dddddd] pb-2 mb-4 uppercase tracking-widest text-[#000000]">
+            ARCHITECTURE_HYPOTHESIS_INPUT
+          </div>
+          <p className="font-code-md text-[14px] leading-relaxed whitespace-pre-wrap text-[#000000]">
+            {rawPrompt}
+          </p>
+        </div>
+      )}
+
       {/* Action Bar (Top) */}
       <div className="flex flex-wrap justify-end gap-3 w-full border-b-[2px] border-[#000000] pb-2 print:hidden">
         <button 
@@ -207,12 +222,8 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: Revi
             <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
               <span className="text-[#5d5f5f]">05.</span> ARCHITECTURE_DIAGRAM
             </div>
-            <div className="p-4 sm:p-6 bg-[#f9f9f9] overflow-x-auto font-mono text-[10px] sm:text-[12px] text-[#000000]">
-              <pre>
-                <code>
-                  {data.architectureDiagram}
-                </code>
-              </pre>
+            <div className="p-4 sm:p-6 bg-[#ffffff] overflow-x-auto">
+              <Mermaid chart={data.architectureDiagram} />
             </div>
           </div>
         )}
