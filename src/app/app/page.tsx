@@ -156,7 +156,7 @@ function HomeEditor() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full lg:w-1/3 border-b-[2px] lg:border-b-0 lg:border-r-[2px] border-[#000000] flex flex-col bg-[#ffffff] relative min-h-[500px]"
+          className="w-full lg:w-1/3 border-b-[2px] lg:border-b-0 lg:border-r-[2px] border-[#000000] flex flex-col bg-[#ffffff] relative min-h-[500px] lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] overflow-y-auto"
         >
           <div className="absolute top-2 left-2 text-[#000000] font-mono text-[14px] opacity-30 pointer-events-none">+</div>
           <div className="absolute top-2 right-2 text-[#000000] font-mono text-[14px] opacity-30 pointer-events-none">+</div>

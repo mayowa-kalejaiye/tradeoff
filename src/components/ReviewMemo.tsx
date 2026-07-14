@@ -117,7 +117,7 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: Revi
       )}
 
       {/* Bottom Section Grid (Risk & Topology) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10 w-full items-start">
         
         {/* 3. Risk Analysis */}
         {data.businessRisks && data.businessRisks.length > 0 && (
