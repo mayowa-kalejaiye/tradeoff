@@ -34,6 +34,12 @@ import { safetyCriticalGraph } from './knowledge/cards/safety_critical';
 import { fleetManagementGraph } from './knowledge/cards/fleet_management';
 import { physicalSafetyGraph } from './knowledge/cards/physical_safety';
 import { observabilityGraph } from './knowledge/cards/observability';
+import { coreInfrastructureGraph } from './knowledge/cards/core_infrastructure';
+import { identityGraph } from './knowledge/cards/identity';
+import { secretsGraph } from './knowledge/cards/secrets';
+import { deploymentGraph } from './knowledge/cards/deployment';
+import { eventTransportGraph } from './knowledge/cards/event_transport';
+import { multiTenancyGraph } from './knowledge/cards/multi_tenancy';
 import { generateAdaptationPatches } from '../ai/patcher';
 import { applyPatches } from '../ai/patcher/applier';
 import { resolveGraph } from './knowledge/resolver';
@@ -74,7 +80,13 @@ export const graphRegistry: Record<string, any> = {
   safety_critical: safetyCriticalGraph,
   fleet_management: fleetManagementGraph,
   physical_safety: physicalSafetyGraph,
-  observability: observabilityGraph
+  observability: observabilityGraph,
+  core_infrastructure: coreInfrastructureGraph,
+  identity: identityGraph,
+  secrets: secretsGraph,
+  deployment: deploymentGraph,
+  event_transport: eventTransportGraph,
+  multi_tenancy: multiTenancyGraph
 };
 
 function getKnowledgePack(input: StartupModel): KnowledgePack | EngineResponse {
@@ -87,7 +99,12 @@ function getKnowledgePack(input: StartupModel): KnowledgePack | EngineResponse {
   };
 }
 
+import { sanitizeInput } from '../utils/sanitize';
+
 export async function recommendArchitecture(input: StartupModel, rawPrompt: string): Promise<EngineResponse & { usage?: any, telemetry?: any }> {
+  // Sanitize the raw prompt to prevent LLM injection attacks
+  const safePrompt = sanitizeInput(rawPrompt);
+
   // 1. Check for legacy domain handlers
   const packOrResponse = getKnowledgePack(input);
   if ('status' in packOrResponse) return packOrResponse as EngineResponse;
@@ -108,7 +125,7 @@ export async function recommendArchitecture(input: StartupModel, rawPrompt: stri
 
   try {
     // 4. LLM Synthesis (Pass executive facts)
-    const { adaptation, usage } = await generateAdaptationPatches(rawPrompt, input, telemetry.executiveFacts);
+    const { adaptation, usage } = await generateAdaptationPatches(safePrompt, input, telemetry.executiveFacts);
     
     // Track AI insights in telemetry
     telemetry.insightPatches = adaptation.insightPatches ? adaptation.insightPatches.map((p: any) => p.observation) : [];
@@ -127,7 +144,7 @@ export async function recommendArchitecture(input: StartupModel, rawPrompt: stri
     };
   } catch (error) {
     console.error("Failed to generate adaptation patches:", error);
-    const fallbackData = knowledgePack.legacyOutput || applyPatches(input, knowledgePack, { knowledgePatches: [], insightPatches: [], executiveSummary: '' }, activeGraph, telemetry);
+    const fallbackData = knowledgePack.legacyOutput || applyPatches(input, knowledgePack, { knowledgePatches: [], insightPatches: [], executiveSummary: '', principalCritique: '' }, activeGraph, telemetry);
     return { status: 'success', data: runEnhancers(input, fallbackData), inputCapabilities: input.capabilities, telemetry };
   }
 }

@@ -32,7 +32,7 @@ export interface ExecutiveFacts {
   notChosenCount: number;
 }
 
-import { ExecutionTrace, SuppressedNode } from '../debug/trace';
+import { ExecutionTrace, SuppressedNode, ValidationTrace } from '../debug/trace';
 
 // ─── Resolution Telemetry ───
 export interface ResolutionTelemetry {
@@ -43,6 +43,7 @@ export interface ResolutionTelemetry {
   pressureMap: PressureSource[];
   executiveFacts: ExecutiveFacts;
   insightPatches?: string[];
+  validationTraces?: ValidationTrace[];
 }
 
 export interface ResolverOutput {
@@ -462,29 +463,140 @@ export function resolveGraph(
     activeNodes.push(winner.node);
   }
 
-  // 10. Architecture Validation (Cross-Node Invariants)
-  const validationErrors: string[] = [];
-  const activeIds = new Set(activeNodes.map(n => n.id));
+  // 10. Architecture Validation & Synthesis Loop
+  const validationTraces: ValidationTrace[] = [];
+  let isStable = false;
+  let validationIterations = 0;
+  const MAX_ITERATIONS = 10;
 
-  for (const node of activeNodes) {
-    if (node.requires) {
-      for (const req of node.requires) {
-        if (!activeIds.has(req)) {
-          validationErrors.push(`[Validation] ${node.name} requires ${req}, but it was not selected.`);
+  while (!isStable && validationIterations < MAX_ITERATIONS) {
+    isStable = true;
+    validationIterations++;
+    const activeIds = new Set(activeNodes.map(n => n.id));
+
+    for (let i = 0; i < activeNodes.length; i++) {
+      const node = activeNodes[i];
+
+      // Handle supersedes/replaces (Pruning)
+      const prunes = [...(node.supersedes || []), ...(node.replaces || [])];
+      for (const pruneId of prunes) {
+        if (activeIds.has(pruneId)) {
+          const pruneIdx = activeNodes.findIndex(n => n.id === pruneId);
+          if (pruneIdx > -1) {
+            const prunedNode = activeNodes.splice(pruneIdx, 1)[0];
+            activeIds.delete(pruneId);
+            isStable = false;
+            validationTraces.push({
+              iteration: validationIterations,
+              action: 'pruned_superseded',
+              nodeId: pruneId,
+              reason: `Superseded or replaced by ${node.name}`
+            });
+            suppressedNodes.push({
+              id: pruneId,
+              name: prunedNode.name,
+              reason: 'dropped_in_validation',
+              failedConstraint: `Superseded by ${node.name}`,
+              confidence: 100,
+              evidence: []
+            });
+            if (pruneIdx <= i) i--; // Adjust index since we removed an item
+            break; // Process one change at a time to avoid index issues
+          }
         }
       }
-    }
-    if (node.incompatibleWith) {
-      for (const inc of node.incompatibleWith) {
-        if (activeIds.has(inc)) {
-          validationErrors.push(`[Validation] ${node.name} is incompatible with selected node ${inc}.`);
+      if (!isStable) break;
+
+      // Handle requires (Synthesis)
+      if (node.requires) {
+        for (const req of node.requires) {
+          if (!activeIds.has(req)) {
+            const missingNode = Array.from(allNodes.values()).find(n => n.id === req) as ImplementationNode;
+            if (missingNode) {
+              // If missingNode's capability already has a winner in activeNodes, replace it!
+              if (missingNode.capability) {
+                const existingIdx = activeNodes.findIndex(n => n.capability === missingNode.capability && n.id !== missingNode.id);
+                if (existingIdx > -1) {
+                  const oustedNode = activeNodes.splice(existingIdx, 1)[0];
+                  activeIds.delete(oustedNode.id);
+                  suppressedNodes.push({
+                    id: oustedNode.id,
+                    name: oustedNode.name,
+                    reason: 'dropped_in_validation',
+                    failedConstraint: `Replaced by ${missingNode.name} to satisfy hard dependency from ${node.name}`,
+                    confidence: 100,
+                    evidence: []
+                  });
+                  if (existingIdx <= i) i--; // Adjust index
+                }
+              }
+              activeNodes.push(missingNode);
+              activeIds.add(req);
+              isStable = false;
+              validationTraces.push({
+                iteration: validationIterations,
+                action: 'synthesized_dependency',
+                nodeId: req,
+                reason: `Required by ${node.name}`
+              });
+              break;
+            }
+          }
         }
       }
+      if (!isStable) break;
+
+      // Handle incompatibleWith (Conflict Resolution)
+      if (node.incompatibleWith) {
+        for (const inc of node.incompatibleWith) {
+          if (activeIds.has(inc)) {
+            const conflictNode = activeNodes.find(n => n.id === inc);
+            if (conflictNode) {
+              const nodeScore = scores.get(node.id) || 0;
+              const conflictScore = scores.get(conflictNode.id) || 0;
+              
+              let loser: ImplementationNode, winner: ImplementationNode;
+              if (nodeScore >= conflictScore) {
+                loser = conflictNode;
+                winner = node;
+              } else {
+                loser = node;
+                winner = conflictNode;
+              }
+
+              const loserIdx = activeNodes.findIndex(n => n.id === loser.id);
+              activeNodes.splice(loserIdx, 1);
+              activeIds.delete(loser.id);
+              isStable = false;
+              
+              validationTraces.push({
+                iteration: validationIterations,
+                action: 'resolved_conflict',
+                nodeId: loser.id,
+                reason: `Incompatible with ${winner.name} (lost on score: ${Math.min(nodeScore, conflictScore).toFixed(0)} vs ${Math.max(nodeScore, conflictScore).toFixed(0)})`
+              });
+              
+              suppressedNodes.push({
+                id: loser.id,
+                name: loser.name,
+                reason: 'dropped_in_validation',
+                failedConstraint: `Incompatible with ${winner.name}`,
+                confidence: 100,
+                evidence: []
+              });
+              
+              if (loserIdx <= i) i--;
+              break;
+            }
+          }
+        }
+      }
+      if (!isStable) break;
     }
   }
 
-  if (validationErrors.length > 0) {
-    console.warn("Architecture Validation Errors:\n" + validationErrors.join("\n"));
+  if (!isStable) {
+    console.warn(`Architecture Validation Loop failed to stabilize after ${MAX_ITERATIONS} iterations.`);
   }
 
   // 6. Build Pressure Map from driver influence tracking
@@ -538,7 +650,8 @@ export function resolveGraph(
       executionTraces,
       decisionRecords,
       pressureMap,
-      executiveFacts
+      executiveFacts,
+      validationTraces
     }
   };
 }

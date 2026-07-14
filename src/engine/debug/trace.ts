@@ -23,7 +23,7 @@ export interface ExecutionTrace {
 export interface SuppressedNode {
   id: string;
   name: string;
-  reason: 'failed_eligibility' | 'failed_constraint' | 'missing_activation_capability' | 'lost_in_arena';
+  reason: 'failed_eligibility' | 'failed_constraint' | 'missing_activation_capability' | 'lost_in_arena' | 'dropped_in_validation';
   failedEligibility?: { type: 'anyOf' | 'allOf' | 'noneOf'; details: string[] };
   failedConstraint?: string;
   missingCapabilities?: string[];
@@ -31,7 +31,15 @@ export interface SuppressedNode {
   evidence: string[];
 }
 
+export interface ValidationTrace {
+  iteration: number;
+  action: 'synthesized_dependency' | 'resolved_conflict' | 'pruned_superseded';
+  nodeId: string;
+  reason: string;
+}
+
 export interface EngineValidationTrace {
   executionTraces: ExecutionTrace[];
   suppressedNodes: SuppressedNode[];
+  validationTraces?: ValidationTrace[];
 }

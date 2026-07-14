@@ -52,6 +52,7 @@ export type TransactionVolume = 'low' | 'medium' | 'high' | 'unknown';
 export type ComplianceLevel = 'pci_dss' | 'hipaa' | 'soc2' | 'unknown';
 
 import { StartupModel } from './models/startup';
+import { ExecutionTrace, SuppressedNode, ValidationTrace } from './debug/trace';
 
 export type ArchitectureInput = StartupModel;
 
@@ -193,6 +194,8 @@ export interface ArchitectureOutput {
   strategicAdvantages: string[];
   domainConstraints: string[];
   architectureStyle: string;
+  principalCritique?: string;
+  architectureDiagram?: string;
   confidenceScores: ConfidenceScores;
   confidenceBreakdown: ConfidenceBreakdown;
   missingInformation: string[];
@@ -215,6 +218,9 @@ export interface ArchitectureOutput {
   decisionCards?: DecisionCard[];
   rejectedDecisions?: RejectedDecision[];
   pressureMap?: PressureMapEntry[];
+  validationTraces?: ValidationTrace[];
+  executionTraces?: ExecutionTrace[];
+  suppressedNodes?: SuppressedNode[];
   telemetry?: any;
 }
 

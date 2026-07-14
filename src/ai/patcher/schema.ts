@@ -21,6 +21,7 @@ export const InsightPatchSchema = z.object({
 
 export const ArchitectureAdaptationSchema = z.object({
   executiveSummary: z.string().describe("Polish the provided deterministic facts into a 2-3 sentence CTO-level summary. Explain WHY this architecture exists. Do NOT add new information."),
+  principalCritique: z.string().describe("A critical, senior-level review of the generated architecture. Point out the hardest operational challenge or the biggest systemic risk of the chosen stack. Do not sugarcoat it."),
   knowledgePatches: z.array(KnowledgePatchSchema),
   insightPatches: z.array(InsightPatchSchema)
 });

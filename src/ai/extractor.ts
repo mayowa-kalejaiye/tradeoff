@@ -2,6 +2,7 @@ import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { StartupModel } from '../engine/models/startup';
+import { STANDARD_CAPABILITIES, STANDARD_INDUSTRY_CONTEXTS } from './ontology';
 
 export interface ExtractionResult {
   input: StartupModel;
@@ -15,7 +16,8 @@ const extractionSchema = z.object({
   capabilities: z.array(z.object({
     name: z.string(),
     score: z.number().min(0).max(100).describe('Confidence score from 0 to 100 indicating how strongly the user needs this capability.')
-  })).describe('The core software capabilities explicitly or implicitly required by this project. CRITICAL: You MUST use dot-notation namespaces (e.g., "communication.robot", "communication.browser", "data.sync.offline", "ai.agent_orchestration"). NEVER use generic tags like "realtime" or "communication" alone.'),
+  })).describe('The core software capabilities required by this project. Choose exact string matches from the provided ontology whenever possible.'),
+  industryContexts: z.array(z.string()).describe('The industry verticals this project operates in. Choose exact string matches from the provided ontology whenever possible.'),
   teamScale: z.enum(['solo', 'small', 'medium', 'enterprise']).describe('The scale of the team building this. Solo = 1, Small = 2-10, Medium = 11-50, Enterprise = 50+'),
   teamSize: z.number().describe('The number of developers working on the project. Default to 1 if unknown or solo.'),
   runwayMonths: z.number().optional().describe('Estimated runway in months if mentioned. Empty if unknown.'),
@@ -47,7 +49,13 @@ export async function extractArchitectureInput(prompt: string): Promise<Extracti
       If they say "we are a team of 3 trying to launch an MVP this week", their priority is "speed".
 
       CRITICAL: You must extract the underlying 'intent' (what they are optimizing for) and the required 'capabilities'.
-      CRITICAL: For capabilities, you MUST namespace them to avoid leaking across domains (e.g., "communication.robot", "communication.browser", "data.sync.offline"). DO NOT use generic tags like "realtime" or "communication" as they cause catastrophic graph leakage.
+      CRITICAL: You MUST select capabilities from the provided Standard Capability Ontology whenever possible. Do not invent generic capabilities like "realtime" or "communication" if a more precise ontology tag exists.
+      
+      --- STANDARD CAPABILITY ONTOLOGY ---
+      ${STANDARD_CAPABILITIES.join('\n')}
+      
+      --- STANDARD INDUSTRY CONTEXTS ---
+      ${STANDARD_INDUSTRY_CONTEXTS.join('\n')}
 
       CRITICAL: If they mention a user count (e.g. 300,000) but do NOT explicitly say if it is concurrent, MAU, or registered, you MUST set userMetric to "unknown". Do not guess.
 
@@ -63,7 +71,7 @@ export async function extractArchitectureInput(prompt: string): Promise<Extracti
   const deterministicCaps: { name: string, score: number, source: 'llm'|'deterministic' }[] = [];
   
   if (p.includes('websocket') || p.includes('realtime') || p.includes('chat')) {
-    deterministicCaps.push({ name: 'communication.realtime.browser', score: 100, source: 'deterministic' });
+    deterministicCaps.push({ name: 'communication.realtime', score: 100, source: 'deterministic' });
   }
   if (p.includes('robot') || p.includes('agv') || p.includes('drone')) {
     deterministicCaps.push({ name: 'robotics.middleware', score: 100, source: 'deterministic' });
@@ -85,3 +93,4 @@ export async function extractArchitectureInput(prompt: string): Promise<Extracti
   
   return { input: finalInput, usage };
 }
+

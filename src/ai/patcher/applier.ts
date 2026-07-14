@@ -25,6 +25,11 @@ export function applyPatches(
     }];
   }
 
+  // Apply Principal Critique
+  if (adaptation.principalCritique) {
+    output.principalCritique = adaptation.principalCritique;
+  }
+
   // Apply Graph Nodes
   if (activeGraph.length > 0) {
     output.decisionCards = [];
@@ -158,6 +163,14 @@ export function applyPatches(
     }
   }
 
+  // Apply Deep Telemetry for Explainability
+  output.validationTraces = telemetry.validationTraces || [];
+  output.executionTraces = telemetry.executionTraces || [];
+  output.suppressedNodes = telemetry.suppressedNodes || [];
+
+  // Generate Deterministic Architecture Diagram
+  output.architectureDiagram = generateMermaidDiagram(activeGraph);
+
   return output;
 }
 
@@ -186,6 +199,54 @@ function generateEmptyOutput(): ArchitectureOutput {
     operatingCostDrivers: [],
     decisionCards: [],
     rejectedDecisions: [],
-    pressureMap: []
+    pressureMap: [],
+    validationTraces: [],
+    executionTraces: [],
+    suppressedNodes: []
   };
+}
+
+function generateMermaidDiagram(activeGraph: ImplementationNode[]): string {
+  let mermaid = '```mermaid\ngraph TD\n';
+  
+  // Group nodes by systemGroup
+  const groups: Record<string, ImplementationNode[]> = {};
+  for (const node of activeGraph) {
+    if (node.type !== 'Implementation' && node.type as any !== 'EngineeringOption' && node.type !== 'Capability') continue;
+    const groupName = node.systemGroup || 'core';
+    if (!groups[groupName]) groups[groupName] = [];
+    groups[groupName].push(node);
+  }
+
+  // Create subgraphs
+  for (const [groupName, nodes] of Object.entries(groups)) {
+    mermaid += `  subgraph ${groupName}\n`;
+    for (const node of nodes) {
+      // Create a safe ID
+      const safeId = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+      mermaid += `    ${safeId}["${node.name}"]\n`;
+    }
+    mermaid += `  end\n`;
+  }
+
+  // Add edges for 'requires' dependencies
+  mermaid += `\n`;
+  for (const node of activeGraph) {
+    if (!node.requires) continue;
+    const safeSourceId = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+    
+    for (const req of node.requires) {
+      // Find the target node that satisfies this requirement
+      // The requirement could be a capability or a specific node ID
+      // We look for a node in activeGraph that either has that ID or provides that capability
+      const targetNode = activeGraph.find(n => n.id === req || n.capability === req);
+      if (targetNode) {
+        const safeTargetId = targetNode.id.replace(/[^a-zA-Z0-9]/g, '_');
+        mermaid += `  ${safeSourceId} --> ${safeTargetId}\n`;
+      }
+    }
+  }
+
+  mermaid += '```';
+  return mermaid;
 }

@@ -11,12 +11,14 @@ export async function generateAdaptationPatches(
 ): Promise<{ adaptation: ArchitectureAdaptation; usage: any }> {
 
   const systemPrompt = `
-You are a world-class Staff Software Engineer analyzing a startup idea.
-The Deterministic Architecture Engine has already analyzed the startup constraints and built a "Resolved Decision Graph".
-Your task is to synthesize the deterministic facts into an executive summary, tailor the rationale of nodes to the specific startup context, and add novel "Insight Patches" for risks or blind spots.
+You are a world-class Principal Software Engineer reviewing a proposed architecture for a startup.
+The Deterministic Architecture Engine has already analyzed the startup constraints and built a mathematically sound "Resolved Decision Graph".
+Your task is NOT to suggest new technologies, but to critique the generated architecture. 
+You must synthesize the deterministic facts into an executive summary, adapt the rationale of nodes, and most importantly, provide a hard, senior-level critique pointing out the biggest systemic risk or operational burden of the chosen stack.
 
 You MAY:
 ✓ Polish the deterministic facts into a cohesive executive summary.
+✓ Provide a brutal, honest Principal Critique of the operational tradeoffs of the architecture.
 ✓ Adapt the rationale of existing nodes to sound cohesive.
 ✓ Add novel Business Risks or Domain Constraints specific to their niche.
 

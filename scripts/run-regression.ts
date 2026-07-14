@@ -94,6 +94,10 @@ async function runEvaluations() {
       }
       reportLines.push('\n---\n');
       
+      // Sleep for 5 seconds to avoid Gemini free-tier RPM limits
+      console.log('Sleeping for 5s to avoid rate limits...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
     } catch (err: any) {
       failed++;
       console.log(`❌ [${testCase.id}] Error: ${err.message}`);
