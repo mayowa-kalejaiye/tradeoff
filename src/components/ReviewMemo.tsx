@@ -119,37 +119,25 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: Revi
       {/* Bottom Section (Risk & Topology) */}
       <div className="flex flex-col gap-8 relative z-10 w-full items-start">
         
-        {/* 3. Risk Analysis */}
-        {data.businessRisks && data.businessRisks.length > 0 && (
+        {/* 3. Principal Critique */}
+        {data.principalCritique && (
           <div className="border-[2px] border-[#000000] bg-[#ffffff] flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 uppercase tracking-widest">
-              <div className="flex items-center gap-2"><span className="text-[#5d5f5f]">03.</span> RISK_ANALYSIS</div>
+              <div className="flex items-center gap-2"><span className="text-[#5d5f5f]">03.</span> PRINCIPAL_CRITIQUE</div>
               <div className="text-[8px] sm:text-[10px] text-[#5d5f5f] bg-[#ffffff] px-2 py-0.5 border-[1px] border-[#5d5f5f] truncate max-w-full">INCIDENT_ID: {reviewId || 'TRD-8910-XX'}</div>
             </div>
             <div className="p-4 sm:p-6 flex flex-col gap-6 flex-1 bg-[#f9f9f9]">
-              {data.businessRisks.map((risk, i) => (
-                <div key={i} className="border-[2px] border-[#000000] flex flex-col bg-[#ffffff] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div className="border-[2px] border-[#000000] flex flex-col bg-[#ffffff] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <div className="p-3 border-b-[2px] border-[#000000] flex items-center gap-3 bg-[#e8e8e8] overflow-hidden">
-                    <span className={`font-mono text-[10px] font-bold px-2 py-1 uppercase tracking-widest border-[2px] border-[#000000] whitespace-nowrap shrink-0 ${risk.level.toUpperCase() === 'HIGH' || risk.level.toUpperCase() === 'CRITICAL' ? 'bg-[#ba1a1a] text-[#ffffff]' : 'bg-[#000000] text-[#ffffff]'}`}>
-                      [SEV:{risk.level}]
+                    <span className="font-mono text-[10px] font-bold px-2 py-1 uppercase tracking-widest border-[2px] border-[#000000] whitespace-nowrap shrink-0 bg-[#ba1a1a] text-[#ffffff]">
+                      [REVIEW_WARNING]
                     </span>
-                    <span className="font-code-md text-[12px] sm:text-[14px] font-bold uppercase truncate">{risk.risk}</span>
+                    <span className="font-code-md text-[12px] sm:text-[14px] font-bold uppercase truncate">Operational Tradeoff</span>
                   </div>
                   <div className="p-4 font-code-md text-[12px] sm:text-[14px] text-[#000000] leading-relaxed">
-                    {risk.reason}
+                    {data.principalCritique}
                   </div>
-                  {risk.trace?.patched && (
-                    <div className="mt-auto border-t-[2px] border-[#000000] bg-[#000000] p-4 flex gap-4 items-start relative overflow-hidden group">
-                      <div className="absolute inset-0 opacity-20 blueprint-bg pointer-events-none"></div>
-                      <span className="material-symbols-outlined text-[24px] text-[#ffffff] relative z-10 group-hover:animate-spin">memory</span>
-                      <div className="relative z-10 text-[#ffffff]">
-                        <div className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1 border-b-[1px] border-[#ffffff] pb-1 inline-block">SYS_INSIGHT</div>
-                        <p className="font-code-md text-[12px] leading-tight italic mt-1">"{risk.trace.reason}"</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              ))}
             </div>
           </div>
         )}
@@ -209,6 +197,22 @@ export function ReviewMemo({ data, reviewId, onExportMarkdown, debugMode }: Revi
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. Architecture Diagram */}
+        {data.architectureDiagram && (
+          <div className="border-[2px] border-[#000000] bg-[#ffffff] flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-8">
+            <div className="bg-[#000000] text-[#ffffff] font-mono font-bold text-[10px] sm:text-[12px] px-4 py-3 border-b-[2px] border-[#000000] flex items-center gap-2 uppercase tracking-widest">
+              <span className="text-[#5d5f5f]">05.</span> ARCHITECTURE_DIAGRAM
+            </div>
+            <div className="p-4 sm:p-6 bg-[#f9f9f9] overflow-x-auto font-mono text-[10px] sm:text-[12px] text-[#000000]">
+              <pre>
+                <code>
+                  {data.architectureDiagram}
+                </code>
+              </pre>
             </div>
           </div>
         )}
