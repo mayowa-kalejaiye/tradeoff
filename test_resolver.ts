@@ -17,13 +17,14 @@ const aiCodingPlatformModel: StartupModel = {
   priority: 'speed',
   technicalExperience: 'senior_engineer',
   capabilities: [
-    { name: 'ai.agent_orchestration', score: 100 },
-    { name: 'communication.realtime.browser', score: 95 },
-    { name: 'data.source_control', score: 90 }
-  ],
+    { id: 'cap1', name: 'ai.agent_orchestration', score: 100, evidence: [], source: 'test' },
+    { id: 'cap2', name: 'communication.realtime.browser', score: 95, evidence: [], source: 'test' },
+    { id: 'cap3', name: 'data.source_control', score: 90, evidence: [], source: 'test' }
+  ] as any[],
   unknownTechnologies: [],
   missingNiches: [],
-  confidenceScore: 90
+  confidenceScore: 90,
+  industryContexts: []
 };
 
 async function runTest() {
