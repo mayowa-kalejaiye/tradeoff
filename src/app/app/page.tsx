@@ -29,7 +29,7 @@ function HomeEditor() {
   const lastScrollY = useRef(0);
 
   const wordCount = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
-  const isOverLimit = wordCount > 150;
+  const isOverLimit = wordCount > 100;
 
   useEffect(() => {
     if (remixId) {
@@ -190,7 +190,7 @@ function HomeEditor() {
                   </div>
                   <span className="font-mono text-[12px] font-bold text-[#000000] uppercase tracking-widest">KEEP_PRIVATE</span>
                 </label>
-                <span className={`font-mono text-[12px] tracking-widest ${isOverLimit ? 'text-error font-bold' : 'text-[#5d5f5f]'}`}>{wordCount} / 150</span>
+                <span className={`font-mono text-[12px] tracking-widest ${isOverLimit ? 'text-error font-bold' : 'text-[#5d5f5f]'}`}>{wordCount} / 100</span>
               </div>
             </div>
           </div>

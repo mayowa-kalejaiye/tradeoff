@@ -9,7 +9,7 @@ export function Mermaid({ chart }: { chart: string }) {
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
-      securityLevel: 'loose',
+      securityLevel: 'strict',
     });
     
     // Strip markdown code block if present
