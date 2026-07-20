@@ -115,7 +115,7 @@ export default function LandingPage() {
                   transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }} 
                   className="font-body-lg text-secondary max-w-2xl border-l-thick border-primary pl-6 py-2 text-lg leading-relaxed"
                 >
-                  Tradeoff is your virtual Staff Engineer. Evaluate architecture, expose risks, and avoid $100k mistakes before writing a single line of code.
+                  Tradeoff acts as your virtual Staff Engineer. Describe your startup idea in plain English, and the engine will dissect your architectural assumptions, uncover existential risks, and recommend a battle-hardened tech stack—backed by a deterministic reasoning graph, not an LLM hallucinating opinions. No signup, no fluff; just the engineering judgment you’d get after an hour with a principal engineer.
                 </motion.p>
               </div>
               <div className="md:col-span-4 flex items-end justify-end hidden md:flex">
