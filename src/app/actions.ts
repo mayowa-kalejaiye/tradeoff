@@ -155,9 +155,13 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
     const { telemetry, ...clientOutput } = output as any;
     return clientOutput;
   } catch (error: any) {
+    // Log the full backend error server-side only. Never send raw
+    // error/cause/code text to the client (e.g. DB offline, driver
+    // messages) — the UI must only ever see a friendly message.
     console.error('Error processing architecture request:', error);
 
     // Extract the real underlying database error cause if it's a Drizzle error
+    // (server-side only: persisted to the reviews table for internal debugging).
     let errorMessage = error instanceof Error ? error.message : String(error);
     if (error.cause && error.cause.message) {
       errorMessage = `${errorMessage} (Cause: ${error.cause.message})`;
@@ -189,7 +193,10 @@ export async function processArchitectureRequest(prompt: string, isPrivate: bool
       };
     }
 
-    return { status: 'error', message: `Server Error: ${errorMessage}` };
+    // Generic, user-friendly fallback. The detailed errorMessage above is
+    // already logged server-side and persisted for internal debugging —
+    // never expose backend internals (DB status, drivers, stack text) here.
+    return { status: 'error', message: 'Something went wrong while running your review. Please try again in a moment.' };
   }
 }
 

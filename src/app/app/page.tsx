@@ -72,7 +72,9 @@ function HomeEditor() {
           setResult(output);
         }
       } catch (err: any) {
-        setError(err.message || 'An error occurred.');
+        // Never render raw thrown error text (may contain backend internals).
+        console.error(err);
+        setError('Something went wrong while running your review. Please try again in a moment.');
       }
     });
   };
@@ -103,7 +105,9 @@ function HomeEditor() {
           setResult(output);
         }
       } catch (err: any) {
-        setError(err.message || 'An error occurred.');
+        // Never render raw thrown error text (may contain backend internals).
+        console.error(err);
+        setError('Something went wrong while running your review. Please try again in a moment.');
       }
     });
   };
